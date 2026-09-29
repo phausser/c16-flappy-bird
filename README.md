@@ -29,8 +29,8 @@ The fine-scroll prototype establishes milestone 1. It initializes a
 RAM-resident character set and renders a 40x25 sky, ground, and deterministic
 pipe pattern. The playfield moves left by one hardware pixel per PAL frame;
 after each eight pixels, the visible character map advances and one newly
-generated right-edge column is filled. The border alternates color at each
-column update as a visible refill marker.
+generated right-edge column is filled. A memory-resident column-update counter
+supports debugging of missed or duplicated refills without altering the image.
 
 The prototype still needs the 30-second VICE verification described in
 `TODO.md` before milestone 1 can be accepted.
