@@ -18,11 +18,14 @@ start:
     jsr initialise_video
     jsr render_playfield
     jsr initialise_bird
+    jsr initialise_input
     cli
 
 main_loop:
     jsr wait_for_frame
+    jsr read_input
     jsr clear_bird
+    jsr update_bird_physics
     jsr advance_scroll
     jsr render_bird
     jmp main_loop
@@ -30,6 +33,7 @@ main_loop:
 !source "src/video.asm"
 !source "src/render.asm"
 !source "src/bird.asm"
+!source "src/input.asm"
 
 * = CHARSET_RAM
 !fill 8, 0

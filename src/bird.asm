@@ -1,5 +1,43 @@
 initialise_bird:
+    lda #0
+    sta BIRD_Y_FRACTION
+    sta BIRD_VELOCITY_FRACTION
+    sta BIRD_VELOCITY
+    lda #BIRD_START_Y
+    sta BIRD_Y_POSITION
     jsr render_bird
+    rts
+
+update_bird_physics:
+    lda FLAP_PRESSED
+    beq apply_gravity
+    lda #0
+    sta BIRD_VELOCITY_FRACTION
+    lda #BIRD_FLAP_VELOCITY
+    sta BIRD_VELOCITY
+    jmp update_bird_position
+
+apply_gravity:
+    clc
+    lda BIRD_VELOCITY_FRACTION
+    adc #BIRD_GRAVITY
+    sta BIRD_VELOCITY_FRACTION
+    lda BIRD_VELOCITY
+    adc #0
+    cmp #BIRD_MAX_FALL_SPEED
+    bcc store_velocity
+    lda #BIRD_MAX_FALL_SPEED
+store_velocity:
+    sta BIRD_VELOCITY
+
+update_bird_position:
+    clc
+    lda BIRD_Y_FRACTION
+    adc BIRD_VELOCITY_FRACTION
+    sta BIRD_Y_FRACTION
+    lda BIRD_Y_POSITION
+    adc BIRD_VELOCITY
+    sta BIRD_Y_POSITION
     rts
 
 ; Clear before shifting the world map so the bird stays screen-relative and
