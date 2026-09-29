@@ -1,36 +1,13 @@
 # C16 Flappy Bird
 
-PAL-oriented Flappy Bird for a stock 16 KiB Commodore 16, written in ACME
-assembler.
+Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 
-## Prerequisites
+## Run
 
-- [ACME](https://sourceforge.net/projects/acme-crossass/)
-- VICE with the `xplus4` executable
-
-## Build and run
+Requires [ACME](https://sourceforge.net/projects/acme-crossass/) and VICE
+(`xplus4`).
 
 ```sh
 make
 make run
 ```
-
-`make run` starts VICE as a PAL C16 with exactly 16 KiB RAM. It injects the
-PRG directly after a one-second autostart delay and temporarily enables warp
-mode while autostarting, avoiding the virtual-drive loading delay:
-
-```sh
-xplus4 -model c16pal -ramsize 16 -autostartprgmode 1 -autostart-delay 1 -autostart-warp -autostart build/flappy.prg
-```
-
-## Current milestone
-
-The fine-scroll prototype establishes milestone 1. It initializes a
-RAM-resident character set and renders a 40x25 sky, ground, and deterministic
-pipe pattern. The playfield moves left by one hardware pixel per PAL frame;
-after each eight pixels, the visible character map advances and one newly
-generated right-edge column is filled. A memory-resident column-update counter
-supports debugging of missed or duplicated refills without altering the image.
-
-The prototype still needs the 30-second VICE verification described in
-`TODO.md` before milestone 1 can be accepted.
