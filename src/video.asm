@@ -14,7 +14,7 @@ initialise_video:
 
     lda #TED_SKY_COLOR
     sta TED_COLOR_BG
-    lda #(TED_LUMA_FULL | TED_BLUE)
+    lda #TED_BLUE
     sta TED_BORDER_COLOR
 
     lda #INITIAL_SCROLL_OFFSET
@@ -50,7 +50,7 @@ advance_scroll:
     lda COLUMN_UPDATE_COUNTER
     and #1
     clc
-    adc #(TED_LUMA_FULL | TED_BLUE)
+    adc #TED_BLUE
     sta TED_BORDER_COLOR
     ldx #SCREEN_COLUMNS - 1
     jsr render_world_column
