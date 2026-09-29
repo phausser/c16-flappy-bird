@@ -16,11 +16,11 @@ make run
 ```
 
 `make run` starts VICE as a PAL C16 with exactly 16 KiB RAM. It injects the
-PRG directly and temporarily enables warp mode while autostarting, avoiding
-the virtual-drive loading delay:
+PRG directly after a one-second autostart delay and temporarily enables warp
+mode while autostarting, avoiding the virtual-drive loading delay:
 
 ```sh
-xplus4 -model c16pal -ramsize 16 -autostartprgmode 1 -autostart-warp -autostart build/flappy.prg
+xplus4 -model c16pal -ramsize 16 -autostartprgmode 1 -autostart-delay 1 -autostart-warp -autostart build/flappy.prg
 ```
 
 ## Current milestone

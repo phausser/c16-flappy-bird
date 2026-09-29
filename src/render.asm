@@ -36,7 +36,7 @@ clear_sky:
     sta SCREEN_RAM + (19 * SCREEN_COLUMNS),x
     sta SCREEN_RAM + (20 * SCREEN_COLUMNS),x
     sta SCREEN_RAM + (21 * SCREEN_COLUMNS),x
-    lda #TED_LIGHT_BLUE
+    lda #TED_SKY_COLOR
     sta COLOR_RAM + (0 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (1 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (2 * SCREEN_COLUMNS),x
@@ -64,7 +64,7 @@ clear_sky:
     sta SCREEN_RAM + (22 * SCREEN_COLUMNS),x
     sta SCREEN_RAM + (23 * SCREEN_COLUMNS),x
     sta SCREEN_RAM + (24 * SCREEN_COLUMNS),x
-    lda #TED_YELLOW
+    lda #TED_GROUND_COLOR
     sta COLOR_RAM + (22 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (23 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (24 * SCREEN_COLUMNS),x
@@ -92,7 +92,7 @@ clear_sky:
     lda #GLYPH_PIPE_CAP
     sta SCREEN_RAM + (6 * SCREEN_COLUMNS),x
     sta SCREEN_RAM + (16 * SCREEN_COLUMNS),x
-    lda #TED_GREEN
+    lda #TED_PIPE_COLOR
     sta COLOR_RAM + (1 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (2 * SCREEN_COLUMNS),x
     sta COLOR_RAM + (3 * SCREEN_COLUMNS),x

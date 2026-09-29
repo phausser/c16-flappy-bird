@@ -3,15 +3,15 @@
 ;
 ; $0004-$000d  Scroll state, column-update marker, and screen-copy pointers
 ; $0100-$01ff  CPU stack
-; $0800-$0bff  TED color RAM
-; $0c00-$0fe7  TED screen RAM (the remaining 24 bytes are harmless padding)
+; $0800-$0be7  TED screen RAM (the remaining 24 bytes are harmless padding)
+; $0c00-$0fff  TED color RAM
 ; $1001-$2fff  Program code, static assets and future game state
 ; $3000-$33ff  Reserved for obstacle ring buffer and renderer work data
 ; $3400-$3bff  RAM-resident 256-glyph character set
 ; $3c00-$3fff  1 KiB safety reserve
 
-SCREEN_RAM = $0c00
-COLOR_RAM = $0800
+SCREEN_RAM = $0800
+COLOR_RAM = $0c00
 SCREEN_SIZE = 1000
 SCREEN_PAGE_COUNT = 4
 

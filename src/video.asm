@@ -4,15 +4,17 @@ initialise_video:
     lda #TED_CONTROL2_TEXT_40_COLS
     sta TED_CONTROL2
 
-    lda TED_SOUND_CTRL
+    lda TED_MISC
     and #$fb
-    sta TED_SOUND_CTRL
-    lda #>CHARSET_RAM
+    sta TED_MISC
+    lda #(CHARSET_RAM >> 10)
     sta TED_CHAR_ADDR
+    lda #>SCREEN_RAM
+    sta TED_VIDEO_ADDR
 
-    lda #TED_LIGHT_BLUE
+    lda #TED_SKY_COLOR
     sta TED_COLOR_BG
-    lda #TED_BLUE
+    lda #(TED_LUMA_FULL | TED_BLUE)
     sta TED_BORDER_COLOR
 
     lda #INITIAL_SCROLL_OFFSET
@@ -48,7 +50,7 @@ advance_scroll:
     lda COLUMN_UPDATE_COUNTER
     and #1
     clc
-    adc #TED_BLUE
+    adc #(TED_LUMA_FULL | TED_BLUE)
     sta TED_BORDER_COLOR
     ldx #SCREEN_COLUMNS - 1
     jsr render_world_column

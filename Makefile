@@ -17,7 +17,7 @@ $(BUILD_DIR):
 	mkdir -p $@
 
 run: $(PRG)
-	$(VICE) -model c16pal -ramsize 16 -autostartprgmode 1 -autostart-warp -autostart $(PRG)
+	$(VICE) -model c16pal -ramsize 16 -autostartprgmode 1 -autostart-delay 1 -autostart-warp -autostart $(PRG)
 
 clean:
 	rm -rf $(BUILD_DIR)
