@@ -24,16 +24,20 @@ GLYPH_PIPE_BODY = 1
 GLYPH_PIPE_CAP = 2
 GLYPH_GROUND = 3
 
-; The bird is composed at runtime into six dynamic glyphs: two columns (left,
-; right) by up to three screen rows (top, middle, bottom-overflow). Each
-; column's three glyphs are consecutive charset entries so the composition
-; routine can address them as one flat 24-byte span.
+; The bird is composed at runtime into nine dynamic glyphs: three columns
+; (left, right, tail) by up to three screen rows. The tail column catches
+; the horizontal counter-shift. Each column's three glyphs are consecutive
+; charset entries so the composition routine can address them as one flat
+; 24-byte span.
 GLYPH_BIRD_LEFT_ROW0 = 4
 GLYPH_BIRD_LEFT_ROW1 = 5
 GLYPH_BIRD_LEFT_ROW2 = 6
 GLYPH_BIRD_RIGHT_ROW0 = 7
 GLYPH_BIRD_RIGHT_ROW1 = 8
 GLYPH_BIRD_RIGHT_ROW2 = 9
+GLYPH_BIRD_TAIL_ROW0 = 10
+GLYPH_BIRD_TAIL_ROW1 = 11
+GLYPH_BIRD_TAIL_ROW2 = 12
 
 BIRD_SCREEN_COLUMN = 12
 BIRD_SCREEN_ROW = 10

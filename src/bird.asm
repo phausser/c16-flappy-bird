@@ -65,10 +65,11 @@ clamp_stop_velocity:
 clamp_done:
     rts
 
-; Restores whatever playfield content (sky or pipe) the bird's previous 3x2
-; cell block was covering, using the snapshot render_bird took before it
-; painted there. Must run before the hidden-buffer copy: the bird overlaps
-; the pipe rows, and those glyphs must not be copied across.
+; Restores whatever playfield content (sky or pipe) the bird's previous cell
+; block was covering, using the snapshot render_bird took before it painted
+; there. The block is 3x2, or 3x3 when the counter-shift used the tail
+; column. Must run before the hidden-buffer copy: the bird overlaps the
+; pipe rows, and those glyphs must not be copied across.
 clear_bird:
     lda BIRD_PREV_ROW
     jsr row_to_pointers
@@ -112,12 +113,47 @@ clear_bird:
     sta (SCREEN_DESTINATION),y
     lda BIRD_UNDER_COLOR + 5
     sta (SCREEN_SOURCE),y
+
+    lda BIRD_WIDE
+    beq clear_bird_done
+    lda BIRD_PREV_ROW
+    jsr row_to_pointers
+    ldy #BIRD_SCREEN_COLUMN + 2
+    lda BIRD_UNDER_TAIL_GLYPH + 0
+    sta (SCREEN_DESTINATION),y
+    lda BIRD_UNDER_TAIL_COLOR + 0
+    sta (SCREEN_SOURCE),y
+    lda BIRD_PREV_ROW
+    clc
+    adc #1
+    jsr row_to_pointers
+    ldy #BIRD_SCREEN_COLUMN + 2
+    lda BIRD_UNDER_TAIL_GLYPH + 1
+    sta (SCREEN_DESTINATION),y
+    lda BIRD_UNDER_TAIL_COLOR + 1
+    sta (SCREEN_SOURCE),y
+    lda BIRD_PREV_ROW
+    clc
+    adc #2
+    jsr row_to_pointers
+    ldy #BIRD_SCREEN_COLUMN + 2
+    lda BIRD_UNDER_TAIL_GLYPH + 2
+    sta (SCREEN_DESTINATION),y
+    lda BIRD_UNDER_TAIL_COLOR + 2
+    sta (SCREEN_SOURCE),y
+clear_bird_done:
     rts
 
-; Composes the current animation frame into the six dynamic bird glyphs at
-; the correct sub-pixel row offset, then paints them into the 3x2 screen
-; cell block at the bird's new position (saving what was there first).
+; Composes the current animation frame into the dynamic bird glyphs.
+; Vertical sub-pixel offset selects the scanline. Horizontal offset is
+; 7 - SCROLL_OFFSET, so the hardware scroll and the bitmap walk in opposite
+; directions and the bird stays on one screen pixel. The tail column is
+; painted only when that offset is nonzero.
 render_bird:
+    lda #INITIAL_SCROLL_OFFSET
+    sec
+    sbc SCROLL_OFFSET
+    sta BIRD_H_SHIFT
     lda BIRD_Y_POSITION
     and #$07
     sta BIRD_SUB_Y
@@ -134,6 +170,7 @@ clear_dynamic_glyphs:
     lda #0
     sta CHARSET_RAM + (GLYPH_BIRD_LEFT_ROW0 * 8),x
     sta CHARSET_RAM + (GLYPH_BIRD_RIGHT_ROW0 * 8),x
+    sta CHARSET_RAM + (GLYPH_BIRD_TAIL_ROW0 * 8),x
     inx
     cpx #24
     bne clear_dynamic_glyphs
@@ -144,11 +181,29 @@ clear_dynamic_glyphs:
     sta BIRD_ROW_COUNTER
 copy_bird_rows:
     lda (MASK_POINTER),y
-    sta CHARSET_RAM + (GLYPH_BIRD_LEFT_ROW0 * 8),x
+    sta BIRD_SHIFT_LEFT
     iny
     lda (MASK_POINTER),y
-    sta CHARSET_RAM + (GLYPH_BIRD_RIGHT_ROW0 * 8),x
+    sta BIRD_SHIFT_RIGHT
     iny
+    lda #0
+    sta BIRD_SHIFT_TAIL
+    lda BIRD_H_SHIFT
+    beq store_shifted_row
+    sta BIRD_SHIFT_COUNT
+shift_bird_row:
+    lsr BIRD_SHIFT_LEFT
+    ror BIRD_SHIFT_RIGHT
+    ror BIRD_SHIFT_TAIL
+    dec BIRD_SHIFT_COUNT
+    bne shift_bird_row
+store_shifted_row:
+    lda BIRD_SHIFT_LEFT
+    sta CHARSET_RAM + (GLYPH_BIRD_LEFT_ROW0 * 8),x
+    lda BIRD_SHIFT_RIGHT
+    sta CHARSET_RAM + (GLYPH_BIRD_RIGHT_ROW0 * 8),x
+    lda BIRD_SHIFT_TAIL
+    sta CHARSET_RAM + (GLYPH_BIRD_TAIL_ROW0 * 8),x
     inx
     dec BIRD_ROW_COUNTER
     bne copy_bird_rows
@@ -196,9 +251,11 @@ row_to_pointers:
     ldy VISIBLE_COLOR_HI
     jmp point_row
 
-; Saves the true playfield content of the bird's new 3x2 cell block into
+; Saves the true playfield content of the bird's new cell block into
 ; BIRD_UNDER_GLYPH/COLOR, then paints the freshly composed bird glyphs over
-; it. BIRD_TOP_ROW must already hold this frame's top row.
+; it. BIRD_TOP_ROW must already hold this frame's top row. The tail column
+; is included only when BIRD_H_SHIFT is nonzero; BIRD_WIDE records that for
+; the next clear.
 set_bird_screen_cells:
     lda BIRD_TOP_ROW
     jsr row_to_pointers
@@ -220,6 +277,18 @@ set_bird_screen_cells:
     sta (SCREEN_DESTINATION),y
     lda #TED_BIRD_COLOR
     sta (SCREEN_SOURCE),y
+    lda BIRD_H_SHIFT
+    beq set_row0_done
+    iny
+    lda (SCREEN_DESTINATION),y
+    sta BIRD_UNDER_TAIL_GLYPH + 0
+    lda (SCREEN_SOURCE),y
+    sta BIRD_UNDER_TAIL_COLOR + 0
+    lda #GLYPH_BIRD_TAIL_ROW0
+    sta (SCREEN_DESTINATION),y
+    lda #TED_BIRD_COLOR
+    sta (SCREEN_SOURCE),y
+set_row0_done:
 
     lda BIRD_TOP_ROW
     clc
@@ -243,6 +312,18 @@ set_bird_screen_cells:
     sta (SCREEN_DESTINATION),y
     lda #TED_BIRD_COLOR
     sta (SCREEN_SOURCE),y
+    lda BIRD_H_SHIFT
+    beq set_row1_done
+    iny
+    lda (SCREEN_DESTINATION),y
+    sta BIRD_UNDER_TAIL_GLYPH + 1
+    lda (SCREEN_SOURCE),y
+    sta BIRD_UNDER_TAIL_COLOR + 1
+    lda #GLYPH_BIRD_TAIL_ROW1
+    sta (SCREEN_DESTINATION),y
+    lda #TED_BIRD_COLOR
+    sta (SCREEN_SOURCE),y
+set_row1_done:
 
     lda BIRD_TOP_ROW
     clc
@@ -266,13 +347,27 @@ set_bird_screen_cells:
     sta (SCREEN_DESTINATION),y
     lda #TED_BIRD_COLOR
     sta (SCREEN_SOURCE),y
+    lda BIRD_H_SHIFT
+    beq set_row2_done
+    iny
+    lda (SCREEN_DESTINATION),y
+    sta BIRD_UNDER_TAIL_GLYPH + 2
+    lda (SCREEN_SOURCE),y
+    sta BIRD_UNDER_TAIL_COLOR + 2
+    lda #GLYPH_BIRD_TAIL_ROW2
+    sta (SCREEN_DESTINATION),y
+    lda #TED_BIRD_COLOR
+    sta (SCREEN_SOURCE),y
+set_row2_done:
+    lda BIRD_H_SHIFT
+    sta BIRD_WIDE
     rts
 
 ; -----------------------------------------------------------------------
 ; Bird sprite data. Each mask is 16 rows of (left-byte, right-byte) making
-; a 16x16 1-bit image; render_bird copies it into the dynamic glyphs at a
-; runtime row offset, so no bit-shifting is needed for vertical sub-pixel
-; movement. Reached only via MASK_POINTER, never by falling through code.
+; a 16x16 1-bit image. render_bird places it at a vertical byte offset and
+; shifts it right by 7 - SCROLL_OFFSET so the fine scroll does not drag the
+; bird. Reached only via MASK_POINTER, never by falling through code.
 ; -----------------------------------------------------------------------
 
 wing_phase_table:

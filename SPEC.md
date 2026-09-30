@@ -97,26 +97,28 @@ Horizontalscroll wird daraus abgeleitet.
 
 ### Vogel und vertikale Pixelbewegung
 
-Der Vogel ist ein 16 x 16 Pixel grosses Objekt. Seine physikalische
-Y-Position und Geschwindigkeit liegen in 8.8-Fixpunkt vor. Fuer das Rendering
-enthaelt der Zeichensatz einen kleinen dynamischen Bereich fuer die vier
-Vogelzeichen:
+Der Vogel ist ein 16 x 16 Pixel grosses Objekt und steht horizontal fest.
+Seine physikalische Y-Position und Geschwindigkeit liegen in 8.8-Fixpunkt
+vor. Fuer das Rendering enthaelt der Zeichensatz neun dynamische Vogelzeichen,
+drei Spalten mal drei Zeilen.
 
-1. Die ganzzahlige Y-Position bestimmt die zwei Bildschirmzeilen.
-2. Die unteren drei Bits bestimmen den Pixelversatz innerhalb der
-   Zeichenreihe.
-3. Aus einem 16 x 16-Bitmasken-Frame wird ein 16 x 24 Pixel grosser
-   Arbeitsblock (mit Ueberlaufzeile) zeilenverschoben in diese vier bis sechs
-   Zeichenglyphen kopiert.
-4. Die passenden Zeichen werden an die zwei beziehungsweise drei betroffenen
-   Screen-Zeilen gesetzt.
+1. Die ganzzahlige Y-Position bestimmt die Bildschirmzeile.
+2. Die unteren drei Bits bestimmen den vertikalen Pixelversatz.
+3. Der Feinscroll schiebt jede Zelle mit. Damit der Vogel auf dem Schirm
+   stehen bleibt, wird die Maske um `7 - Scroll` Pixel nach rechts in den
+   Glyphen verschoben. Bei Scroll 7 faellt der Versatz auf 0 und die Maske
+   belegt genau zwei Spalten. Ab einem Pixel Versatz kommt die dritte
+   Spalte dazu. Eine leere dritte Spalte wird nicht auf den Schirm gelegt.
+4. Aus dem 16 x 16-Frame wird so ein bis zu 24 x 24 Pixel grosser Block.
+   Leere Bits zeigen die Hintergrundfarbe; eine Zelle hat nur eine
+   Vordergrundfarbe.
 
-So bleibt die Kollisionsbox unabhaengig vom Zeichenraster und der Vogel bewegt
-sich auch vertikal ohne Acht-Pixel-Spruenge. Die Fluegelanimation wechselt
-zeitbasiert zwischen drei Quellmasken; Fallgeschwindigkeit waehlt zusaetzlich
-eine aufgerichtete oder abwaerts gerichtete Pose. Das Kopieren bleibt auf den
-kleinen dynamischen Zeichensatzbereich begrenzt und veraendert keine
-Rohr-Glyphen.
+So bleibt die Kollisionsbox unabhaengig vom Zeichenraster. Der Vogel bewegt
+sich vertikal ohne Acht-Pixel-Spruenge und horizontal ohne den Sieben-Pixel-
+Ruck des Feinscrolls. Die Fluegelanimation wechselt zeitbasiert zwischen drei
+Quellmasken; Fallgeschwindigkeit waehlt zusaetzlich eine aufgerichtete oder
+abwaerts gerichtete Pose. Das Kopieren bleibt auf den kleinen dynamischen
+Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 
 ### Farben und Animation
 

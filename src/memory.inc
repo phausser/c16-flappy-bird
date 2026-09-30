@@ -1,7 +1,7 @@
 ; Stock C16 memory map. The program and charset deliberately stay below $4000,
 ; the first BASIC ROM address on a 16 KiB machine.
 ;
-; $0004-$0033  Scroll state, buffer pointers, screen-copy pointers, and
+; $0004-$003f  Scroll state, buffer pointers, screen-copy pointers, and
 ;              bird physics/rendering state
 ; $0100-$01ff  CPU stack
 ; $0800-$0bff  Front color RAM (TED, paired with the screen below)
@@ -82,3 +82,18 @@ CELL_COLOR = $32
 ; border stores $FF14; doing it in the same call as the column draw is late
 ; enough that the beam still paints the old matrix.
 FLIP_READY = $33
+
+; Snapshot of the third bird column, used only on frames where the
+; counter-shift spills into it. BIRD_WIDE is the shift amount just painted
+; (0 means the tail column was not placed). The four shift bytes are
+; scratch while render_bird composes one mask row.
+BIRD_UNDER_TAIL_GLYPH = $34
+; BIRD_UNDER_TAIL_GLYPH .. +2 = $34-$36
+BIRD_UNDER_TAIL_COLOR = $37
+; BIRD_UNDER_TAIL_COLOR .. +2 = $37-$39
+BIRD_WIDE = $3a
+BIRD_H_SHIFT = $3b
+BIRD_SHIFT_LEFT = $3c
+BIRD_SHIFT_RIGHT = $3d
+BIRD_SHIFT_TAIL = $3e
+BIRD_SHIFT_COUNT = $3f
