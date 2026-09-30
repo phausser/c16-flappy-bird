@@ -7,6 +7,9 @@ one-pixel horizontal scroll. The next frame is built in a hidden text buffer
 and `$FF14` flips to it in the bottom border. Collision uses the visible bird
 pixels and stops at the last free pixel against solid pipe, ceiling and ground
 edges. Empty bird cells leave the environment and its colors untouched.
+The sky uses a blue luminance ramp. The top border is darkest blue, the side
+border ramps evenly to light blue, and the lower border uses color 9 at
+luminance 5. A TED raster IRQ sets these bands.
 Release and press Space again to restart. Scoring and a game-over overlay
 are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 
@@ -34,7 +37,7 @@ These cover every pose and scroll phase, pixel contact, empty-cell rendering,
 animation near edges, freeze and restart. The tests emulate the CPU; use VICE
 for TED raster timing and visual checks.
 
-The bird uses `assets/flappy.gif` at its original 20×14 pixels: four frames,
+The bird uses every frame in `assets/flappy.gif` at its original 20×14 pixels,
 100 ms each (five PAL frames). Fully transparent pixels remain transparent;
 opaque pixels use the game's bird color. Regenerate the checked-in assembler
 masks with `python3 tools/import_bird.py` (requires Pillow). Normal builds

@@ -21,7 +21,7 @@ kein Ziel des ersten Meilensteins.
 - Eine Beruehrung eines Rohrs, des Bodens oder der Decke beendet den Lauf.
   Der Bildschirm bleibt kurz stehen, zeigt Punktzahl und Bestwert und startet
   erst nach einer expliziten Eingabe neu.
-- Der Vogel verwendet vier Animationsbilder aus der gelieferten GIF;
+- Der Vogel verwendet alle Animationsbilder aus der gelieferten GIF;
   die Fluegelbewegung laeuft auch beim Fallen weiter.
 
 ## Zielplattform und Werkzeugkette
@@ -116,7 +116,7 @@ vier Spalten mal drei Zeilen.
 
 Die Kollision beruecksichtigt nur nichtleere Vogelzeichen. Der Vogel bewegt
 sich vertikal ohne Acht-Pixel-Spruenge und horizontal ohne den Sieben-Pixel-
-Ruck des Feinscrolls. Die Animation uebernimmt die vier Frames aus
+Ruck des Feinscrolls. Die Animation uebernimmt alle Frames aus
 `assets/flappy.gif` in Originalreihenfolge mit je fuenf PAL-Frames (100 ms),
 auch beim Fallen. Das Kopieren bleibt auf den kleinen dynamischen
 Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
@@ -209,11 +209,13 @@ reset/init
   -> Titelbild oder neuer Lauf
 ```
 
-`frame-sync` wartet auf genau ein PAL-Frame-Ereignis. Die erste Version darf
-einen sicheren Rasterpoll verwenden; wenn dessen Timing nicht stabil genug
-ist, wird auf eine einzelne TED-Raster-IRQ mit minimalem Handler umgestellt.
-Die Spielberechnung selbst laeuft ausserhalb des IRQ. Das verhindert
-KERNAL-abhhaengige Wartezeiten und macht das Frame-Budget messbar.
+`frame-sync` wartet auf genau ein PAL-Frame-Ereignis am unteren Rand. Fuer den
+Himmel setzt ein TED-Raster-IRQ an jeder Textzeilengrenze die naechste
+Helligkeitsstufe des blauen Verlaufs. Der obere Rahmen bleibt auf Luminanz 0;
+ab der ersten Bildschirmzeile steigt der Seitenrahmen gleichmaessig von
+Luminanz 1 bis 7. Der untere Rahmen verwendet TED-Farbe 9 mit Luminanz 5. Der
+Handler aktualisiert die Farben und den naechsten Rastervergleich;
+Spielberechnung und Bildschirmaufbau bleiben ausserhalb des IRQ.
 
 Vorgesehene Quelldateien:
 

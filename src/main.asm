@@ -13,11 +13,9 @@ basic_end:
 
 * = CODE_START
 
-; Interrupts stay off for the whole run: frame sync is a raster poll and
-; input is a direct matrix read, so nothing here needs the KERNAL's default
-; IRQ. Leaving it enabled would let its jiffy-clock/keyboard-scan handler
-; fire ~50x/sec against our own zero-page state and screen RAM at
-; unpredictable points, which is a likely source of intermittent corruption.
+; IRQ stays masked during setup. The raster gradient later installs its
+; handler through the KERNAL IRQ vector; that handler touches only TED color
+; and compare registers plus its dedicated gradient state.
 start:
     sei
     jsr initialise_input
@@ -32,6 +30,7 @@ restart_round:
     jsr mirror_playfield_to_back
     jsr prime_back_buffer
     jsr initialise_bird
+    jsr initialise_background_gradient
 
 main_loop:
     jsr read_input
@@ -56,6 +55,7 @@ draw_accepted_bird:
 
 !source "src/collision.asm"
 !source "src/video.asm"
+!source "src/gradient.asm"
 !source "src/obstacles.asm"
 !source "src/render.asm"
 !source "src/bird.asm"
@@ -66,6 +66,11 @@ draw_accepted_bird:
 !if * > BACK_COLOR_RAM {
     !error "program overlaps the hidden text buffer"
 }
+
+; Static animation masks live in otherwise unused RAM; the executable code
+; itself must stay below the hidden screen buffers.
+* = $2000
+!source "src/bird_masks.inc"
 
 * = CHARSET_RAM
 !fill 8, 0

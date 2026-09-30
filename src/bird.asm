@@ -293,16 +293,19 @@ select_bird_mask:
     lda BIRD_FRAME_INDEX
     clc
     adc #1
-    and #3
+    cmp #BIRD_FRAME_COUNT
+    bcc bird_frame_index_ready
+    lda #0
+bird_frame_index_ready:
     sta BIRD_FRAME_INDEX
     lda #BIRD_FRAME_TICKS
     sta BIRD_ANIM_TIMER
 bird_animation_tick:
     dec BIRD_ANIM_TIMER
     ldx BIRD_FRAME_INDEX
-    lda wing_mask_table_lo,x
+    lda bird_mask_table_lo,x
     sta MASK_POINTER
-    lda wing_mask_table_hi,x
+    lda bird_mask_table_hi,x
     sta MASK_POINTER + 1
     rts
 
@@ -313,10 +316,3 @@ row_to_pointers:
     ldx VISIBLE_SCREEN_HI
     ldy VISIBLE_COLOR_HI
     jmp point_row
-
-wing_mask_table_lo:
-    !byte <BIRD_MASK_0, <BIRD_MASK_1, <BIRD_MASK_2, <BIRD_MASK_3
-wing_mask_table_hi:
-    !byte >BIRD_MASK_0, >BIRD_MASK_1, >BIRD_MASK_2, >BIRD_MASK_3
-
-!source "src/bird_masks.inc"

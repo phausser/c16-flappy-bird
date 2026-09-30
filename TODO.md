@@ -33,6 +33,8 @@ zaehlt exakt sichtbar mit PAL-Frame-Tempo.
 - [x] Einen Spielbereich mit Himmel, Boden und Rohr-Testspalten rendern.
   Sichtbar sind 38 Spalten; die Matrix bleibt 40 Byte breit, Spalten 0 und
   39 liegen unter dem Rand.
+- [x] Einen senkrechten Blau-Verlauf, abgestuften Seitenrahmen und festen
+  unteren Rahmen mit Raster-IRQ setzen.
 - [x] TED-Horizontalfeinscroll fuer alle acht Ein-Pixel-Offsets isoliert
   implementieren und Richtung/Maskierung mit einem sichtbaren Marker pruefen.
 - [x] Die naechste Spalte im versteckten Textpuffer vorbereiten und `$FF14`
@@ -49,7 +51,7 @@ ueber zwei Umbrueche bei einem Pixel pro Frame, oben und unten gleich.
 
 ## Meilenstein 2 -- Vogel mit Pixelbewegung
 
-- [x] Vogelmasken aus `assets/flappy.gif` als vier 20 x 14-Bitbilder
+- [x] Vogelmasken aus `assets/flappy.gif` als 20 x 14-Bitbilder
   in den Zeichensatz-/Assetbereich aufnehmen.
 - [x] Dynamische Vogelglyphen und die erforderlichen Bildschirmzellen
   reservieren.

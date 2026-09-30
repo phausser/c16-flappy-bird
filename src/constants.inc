@@ -5,9 +5,19 @@ INITIAL_SCROLL_OFFSET = 7
 ; Number of frames per column shift, and the pieces the hidden buffer is
 ; filled in. One piece per frame stays far shorter than the border.
 SCROLL_SLICE_COUNT = 8
-; PAL raster line in the bottom border, below the 200-pixel playfield.
+; PAL raster line in the lower border, after its color has been set at $F8.
 ; The scroll register and the buffer flip are stored here.
-RASTER_BORDER = $f0
+RASTER_BORDER = $fc
+; Text begins at PAL raster $30; change the TED background at each 8-pixel
+; row boundary through row 22, where solid ground starts.
+BACKGROUND_GRADIENT_FIRST_RASTER = $30
+; Low nibble is TED color 13 (blue); bits 4-6 set luminance 0..7.
+BG_GRADIENT_HUE = $0d
+BG_GRADIENT_START_COLOR = BG_GRADIENT_HUE
+BACKGROUND_GRADIENT_BANDS = SCREEN_ROWS
+BACKGROUND_GRADIENT_LINES_PER_BAND = 8
+BACKGROUND_GRADIENT_TOP_RASTER = $00
+FRAME_BOTTOM_COLOR = $59
 PIPE_RANDOM_SEED = $5d
 PIPE_RING_MASK = $3f
 PIPE_FIRST_COLUMN = 24

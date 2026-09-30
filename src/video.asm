@@ -29,9 +29,9 @@ initialise_video:
     lda #BACK_VIDEO_PTR
     sta BACK_FF14
 
-    lda #TED_SKY_COLOR
+    lda #BG_GRADIENT_START_COLOR
     sta TED_COLOR_BG
-    lda #TED_BLUE
+    lda #BG_GRADIENT_START_COLOR
     sta TED_BORDER_COLOR
 
     lda #0
