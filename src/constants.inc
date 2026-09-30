@@ -2,16 +2,22 @@ SCREEN_COLUMNS = 40
 SCREEN_ROWS = 25
 
 INITIAL_SCROLL_OFFSET = 7
+; Number of frames per column shift, and the pieces the hidden buffer is
+; filled in. One piece per frame stays far shorter than the border.
+SCROLL_SLICE_COUNT = 8
+; PAL raster line in the bottom border, below the 200-pixel playfield.
+; The scroll register and the buffer flip are stored here.
+RASTER_BORDER = $f0
 PIPE_PATTERN_MASK = $1f
 PIPE_PATTERN_START = 24
 PIPE_PATTERN_END = 27
 
-; Only these rows ever differ between world columns (pipe body/cap); sky,
-; gap and ground rows are always uniform and never need to be shifted.
+; Only these rows ever differ between world columns (pipe body/cap). Sky,
+; the gap and the ground are uniform, so they are mirrored once and the
+; per-frame copy moves just the two six-row pipe bands.
 PIPE_TOP_FIRST_ROW = 1
 PIPE_BOTTOM_FIRST_ROW = 16
 PIPE_BLOCK_ROWS = 6
-PIPE_BLOCK_LENGTH = (PIPE_BLOCK_ROWS * SCREEN_COLUMNS) - 1
 
 GLYPH_SKY = 0
 GLYPH_PIPE_BODY = 1

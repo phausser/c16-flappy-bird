@@ -67,8 +67,8 @@ clamp_done:
 
 ; Restores whatever playfield content (sky or pipe) the bird's previous 3x2
 ; cell block was covering, using the snapshot render_bird took before it
-; painted there. Must run before the world-shift so a moving bird never
-; leaves glyphs behind in columns the shift touches.
+; painted there. Must run before the hidden-buffer copy: the bird overlaps
+; the pipe rows, and those glyphs must not be copied across.
 clear_bird:
     lda BIRD_PREV_ROW
     jsr row_to_pointers
@@ -188,40 +188,13 @@ choose_animated_mask:
     sta MASK_POINTER + 1
     rts
 
-; Computes SCREEN_DESTINATION = SCREEN_RAM + A*SCREEN_COLUMNS and
-; SCREEN_SOURCE = COLOR_RAM + A*SCREEN_COLUMNS for row number A (0-24).
+; Points SCREEN_DESTINATION / SCREEN_SOURCE at the visible buffer's row A.
+; The pages follow the last $FF14 flip, so the bird is always painted on the
+; buffer the TED is actually showing.
 row_to_pointers:
-    pha
-    lda #<SCREEN_RAM
-    sta SCREEN_DESTINATION
-    lda #>SCREEN_RAM
-    sta SCREEN_DESTINATION + 1
-    lda #<COLOR_RAM
-    sta SCREEN_SOURCE
-    lda #>COLOR_RAM
-    sta SCREEN_SOURCE + 1
-    pla
-    tax
-    beq row_to_pointers_done
-row_to_pointers_loop:
-    clc
-    lda SCREEN_DESTINATION
-    adc #SCREEN_COLUMNS
-    sta SCREEN_DESTINATION
-    bcc row_screen_ok
-    inc SCREEN_DESTINATION + 1
-row_screen_ok:
-    clc
-    lda SCREEN_SOURCE
-    adc #SCREEN_COLUMNS
-    sta SCREEN_SOURCE
-    bcc row_color_ok
-    inc SCREEN_SOURCE + 1
-row_color_ok:
-    dex
-    bne row_to_pointers_loop
-row_to_pointers_done:
-    rts
+    ldx VISIBLE_SCREEN_HI
+    ldy VISIBLE_COLOR_HI
+    jmp point_row
 
 ; Saves the true playfield content of the bird's new 3x2 cell block into
 ; BIRD_UNDER_GLYPH/COLOR, then paints the freshly composed bird glyphs over

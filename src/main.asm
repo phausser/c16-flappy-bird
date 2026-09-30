@@ -22,6 +22,10 @@ start:
     sei
     jsr initialise_video
     jsr render_playfield
+    ; The hidden buffer must already match the playfield before the bird is
+    ; painted, so a later flip never reveals a second bird.
+    jsr mirror_playfield_to_back
+    jsr prime_back_buffer
     jsr initialise_bird
     jsr initialise_input
 
@@ -38,6 +42,12 @@ main_loop:
 !source "src/render.asm"
 !source "src/bird.asm"
 !source "src/input.asm"
+
+; The hidden text buffer starts at $1800. A program that grows into it would
+; be overwritten by the first mirror copy.
+!if * > BACK_COLOR_RAM {
+    !error "program overlaps the hidden text buffer"
+}
 
 * = CHARSET_RAM
 !fill 8, 0

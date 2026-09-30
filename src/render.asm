@@ -9,101 +9,67 @@ render_initial_column:
 
 ; X is the screen column to write. WORLD_COLUMN identifies its leftmost
 ; logical world column, so the same deterministic pipe pattern is used when
-; a new right-edge column is prepared.
+; a new right-edge column is prepared. TARGET_SCREEN_HI / TARGET_COLOR_HI
+; select the front buffer at startup and the hidden buffer on a flip.
+; X is restored for the caller's inx.
 render_world_column:
-    lda #GLYPH_SKY
-    ldy #0
-clear_sky:
-    sta SCREEN_RAM + (0 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (1 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (2 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (3 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (4 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (5 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (6 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (7 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (8 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (9 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (10 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (11 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (12 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (13 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (14 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (15 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (16 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (17 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (18 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (19 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (20 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (21 * SCREEN_COLUMNS),x
-    lda #TED_SKY_COLOR
-    sta COLOR_RAM + (0 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (1 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (2 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (3 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (4 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (5 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (6 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (7 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (8 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (9 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (10 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (11 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (12 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (13 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (14 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (15 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (16 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (17 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (18 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (19 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (20 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (21 * SCREEN_COLUMNS),x
-
-    lda #GLYPH_GROUND
-    sta SCREEN_RAM + (22 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (23 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (24 * SCREEN_COLUMNS),x
-    lda #TED_GROUND_COLOR
-    sta COLOR_RAM + (22 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (23 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (24 * SCREEN_COLUMNS),x
-
+    stx COLUMN_X
+    lda #0
+    sta PIPE_HERE
     txa
     clc
     adc WORLD_COLUMN
     and #PIPE_PATTERN_MASK
     cmp #PIPE_PATTERN_START
-    bcc no_pipe
+    bcc column_pattern_known
     cmp #PIPE_PATTERN_END
-    bcs no_pipe
-
-    lda #GLYPH_PIPE_BODY
-    sta SCREEN_RAM + (1 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (2 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (3 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (4 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (5 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (17 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (18 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (19 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (20 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (21 * SCREEN_COLUMNS),x
-    lda #GLYPH_PIPE_CAP
-    sta SCREEN_RAM + (6 * SCREEN_COLUMNS),x
-    sta SCREEN_RAM + (16 * SCREEN_COLUMNS),x
+    bcs column_pattern_known
+    inc PIPE_HERE
+column_pattern_known:
+    ldy #0
+paint_row:
+    sty ROW_INDEX
+    lda default_glyph,y
+    sta CELL_GLYPH
+    lda default_color,y
+    sta CELL_COLOR
+    lda PIPE_HERE
+    beq store_cell
+    lda pipe_glyph,y
+    beq store_cell
+    sta CELL_GLYPH
     lda #TED_PIPE_COLOR
-    sta COLOR_RAM + (1 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (2 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (3 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (4 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (5 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (6 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (16 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (17 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (18 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (19 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (20 * SCREEN_COLUMNS),x
-    sta COLOR_RAM + (21 * SCREEN_COLUMNS),x
-no_pipe:
+    sta CELL_COLOR
+store_cell:
+    tya
+    ldx TARGET_SCREEN_HI
+    ldy TARGET_COLOR_HI
+    jsr point_row
+    ldy COLUMN_X
+    lda CELL_GLYPH
+    sta (SCREEN_DESTINATION),y
+    lda CELL_COLOR
+    sta (SCREEN_SOURCE),y
+    ldy ROW_INDEX
+    iny
+    cpy #SCREEN_ROWS
+    bcc paint_row
+    ldx COLUMN_X
     rts
+
+; Row 0 and rows 7-15 are sky, 22-24 the ground. pipe_glyph is 0 on those
+; rows; a pipe column overrides the rest (body, cap at the gap).
+default_glyph:
+    !fill 22, GLYPH_SKY
+    !fill 3, GLYPH_GROUND
+default_color:
+    !fill 22, TED_SKY_COLOR
+    !fill 3, TED_GROUND_COLOR
+pipe_glyph:
+    !byte 0
+    !fill 5, GLYPH_PIPE_BODY
+    !byte GLYPH_PIPE_CAP
+    !fill 9, 0
+    !byte GLYPH_PIPE_CAP
+    !fill 5, GLYPH_PIPE_BODY
+    !fill 3, 0
