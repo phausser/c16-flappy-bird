@@ -347,4 +347,4 @@ Der bestehende Animationstest nimmt vier statt der sechs importierten
 GIF-Frames an und bricht deshalb ab; nachfolgende Tests laufen im normalen
 Aufruf nicht. Die Erweiterung auf sechs Posen bleibt offen. Ein erneuter
 Fuenf-Minuten-Dauerlauf des neuesten Stands und echte C16-Hardwaretests
-stehen aus. Reproduzierbare Test- und Tracebefehle stehen im `README.md`.
+stehen aus. Reproduzierbare Test- und Tracebefehle stehen in `TECH.md`.
