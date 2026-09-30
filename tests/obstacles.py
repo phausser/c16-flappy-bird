@@ -62,9 +62,7 @@ print('4096 columns match the model on both restarts; all 7 heights reached', fl
 
 def expected_cell(world, row, col):
     gap = columns[world + col]
-    if row >= 22:
-        return S['GLYPH_GROUND'], S['TED_GROUND_COLOR']
-    if gap and row and (row < gap or row >= gap + 9):
+    if gap and (row < gap or row >= gap + 9):
         glyph = S['GLYPH_PIPE_CAP'] if row in (gap - 1, gap + 9) else S['GLYPH_PIPE_BODY']
         return glyph, S['TED_PIPE_COLOR']
     return S['GLYPH_SKY'], S['TED_SKY_COLOR']

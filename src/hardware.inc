@@ -21,7 +21,7 @@ TED_RAM_ENABLE = $ff3f
 HARDWARE_IRQ_VECTOR = $fffe
 
 ; Bits 0-2 = vertical scroll 3. Scroll 0 shifts the matrix up and opens
-; three scanlines under the ground; the TED paints the bytes past the
+; three scanlines below the playfield; the TED paints the bytes past the
 ; screen matrix there (a light bar, and on some offsets a black block).
 ; Bit 3 = 25 rows. Bit 4 = display on.
 TED_CONTROL1_TEXT_25_ROWS = $1b
@@ -41,9 +41,8 @@ TED_YELLOW = $77
 
 TED_SKY_COLOR = TED_BLUE
 TED_PIPE_COLOR = TED_GREEN
-TED_GROUND_COLOR = TED_YELLOW
 
-; Black gives the bird the strongest contrast against sky, ground and pipes
-; alike, so it stays visible airborne, resting on the ground clamp, or
+; Black gives the bird the strongest contrast against sky and pipes
+; alike, so it stays visible airborne, at the lower screen edge, or
 ; passing in front of a pipe.
 TED_BIRD_COLOR = TED_BLACK

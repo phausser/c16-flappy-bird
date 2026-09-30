@@ -140,15 +140,16 @@ commit_scroll_offset:
     sta TED_CONTROL2
     rts
 
-; Each slice contains six encoded rows. Bit 7 selects color RAM; the low
+; Each slice contains seven encoded rows. Bit 7 selects color RAM; the low
 ; bits are the row. Screen pieces come first, then the same rows of color,
 ; so the hidden buffer is only shown once every pipe cell has been copied.
 copy_current_slice:
     lda COPY_SLICE
     asl
-    clc
-    adc COPY_SLICE
     asl
+    asl
+    sec
+    sbc COPY_SLICE
     sta ROW_INDEX
     lda #SCROLL_ROWS_PER_SLICE
     sta PIPE_HERE
@@ -270,18 +271,18 @@ point_row:
     rts
 
 slice_rows:
-!set copy_row = 1
-!do while copy_row < GROUND_FIRST_ROW {
+!set copy_row = 0
+!do while copy_row < SCREEN_ROWS {
     !byte copy_row
     !set copy_row = copy_row + 1
 }
-!set copy_row = 1
-!do while copy_row < GROUND_FIRST_ROW {
+!set copy_row = 0
+!do while copy_row < SCREEN_ROWS {
     !byte $80 | copy_row
     !set copy_row = copy_row + 1
 }
-; Six unused slots. HUD and ground never vary between columns.
-!fill SCROLL_SLICE_COUNT * SCROLL_ROWS_PER_SLICE - (GROUND_FIRST_ROW - 1) * 2, $ff
+; Six unused slots; the final slice copies one row and builds column 39.
+!fill SCROLL_SLICE_COUNT * SCROLL_ROWS_PER_SLICE - SCREEN_ROWS * 2, $ff
 
 row_offset_lo:
 !set row_number = 0

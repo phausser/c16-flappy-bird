@@ -28,16 +28,12 @@ render_world_column:
     ldy #0
 paint_row:
     sty ROW_INDEX
-    lda default_glyph,y
+    lda #GLYPH_SKY
     sta CELL_GLYPH
-    lda default_color,y
+    lda #TED_SKY_COLOR
     sta CELL_COLOR
     lda PIPE_HERE
     beq store_cell
-    cpy #0
-    beq store_cell
-    cpy #GROUND_FIRST_ROW
-    bcs store_cell
     cpy PIPE_HERE
     bcc top_pipe_cell
     cpy PIPE_RENDER_GAP_END
@@ -72,11 +68,3 @@ store_cell:
     bcc paint_row
     ldx COLUMN_X
     rts
-
-; Row 0 is reserved for the future HUD; rows 22-24 remain ground.
-default_glyph:
-    !fill GROUND_FIRST_ROW, GLYPH_SKY
-    !fill SCREEN_ROWS - GROUND_FIRST_ROW, GLYPH_GROUND
-default_color:
-    !fill GROUND_FIRST_ROW, TED_SKY_COLOR
-    !fill SCREEN_ROWS - GROUND_FIRST_ROW, TED_GROUND_COLOR

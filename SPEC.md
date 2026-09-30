@@ -11,18 +11,22 @@ Vogelanimation.
 Der erste spielbare Build ist PAL-orientiert (50 Hz). NTSC-Unterstuetzung ist
 kein Ziel des ersten Meilensteins.
 
-## Spielerlebnis
+## Spielerlebnis (Zielbild)
 
 - Eine Taste (`SPACE` oder `FIRE`) laesst den Vogel mit einem definierten
   Impuls aufsteigen; ohne Eingabe wirkt konstante Schwerkraft.
 - Rohre laufen von rechts nach links. Die Luecke ist sicher erreichbar und
   ihre Position sowie der Abstand zwischen Rohren werden mit der Punktzahl
   schrittweise anspruchsvoller.
-- Eine Beruehrung eines Rohrs, des Bodens oder der Decke beendet den Lauf.
+- Eine Beruehrung eines Rohrs oder der oberen/unteren Spielfeldkante beendet den Lauf.
   Der Bildschirm bleibt kurz stehen, zeigt Punktzahl und Bestwert und startet
   erst nach einer expliziten Eingabe neu.
 - Der Vogel verwendet alle Animationsbilder aus der gelieferten GIF;
   die Fluegelbewegung laeuft auch beim Fallen weiter.
+
+Aktuell umgesetzt sind SPACE-Steuerung, Scrollen, Rohrfolge, Pixelkollision,
+Einfrieren und Neustart. FIRE, Punkte, Bestwert, Titelbild und steigende
+Schwierigkeit sind noch offen; siehe `TODO.md`.
 
 ## Zielplattform und Werkzeugkette
 
@@ -45,9 +49,8 @@ Initialisierung, Laden und Debug-Ausgaben duerfen die KERNAL-Routinen nutzen.
 Die Spielansicht verwendet den TED-Textmodus mit einem eigenen Zeichensatz.
 Die Matrix ist 40 x 25 Zeichen zu 8 x 8 Pixeln. Der TED zeigt 38 Spalten
 (`$FF07` Bit 3 geloescht), damit der Rand die angeschnittene Scroll-Zelle
-verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Ein fester HUD-Streifen
-belegt die oberste Zeile; Spielfeld, Himmel und Boden belegen die restlichen
-24 Reihen. Die Rohre bestehen aus wiederverwendbaren Kappen-, Koerper- und
+verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Das Spielfeld nutzt alle 25 Reihen ohne Boden- oder HUD-Streifen.
+Rohre reichen oben und unten bis an den Rand der Zeichenmatrix. Die Rohre bestehen aus wiederverwendbaren Kappen-, Koerper- und
 Randzeichen. Das spart RAM und erlaubt unterschiedliche Hoehen allein durch
 Umfuellen der Screen-Map.
 
@@ -68,12 +71,11 @@ alten Spalte standen.
 Stattdessen gibt es zwei Textpuffer. Sichtbar starten Farbe `$0800` und
 Screen `$0C00` (`$FF14` = `$0C`). Versteckt liegen Farbe `$1800` und Screen
 `$1C00` (`$FF14` = `$18`). In den acht Frames bis zum Umbruch wandern die
-variablen Spielfeldzeilen 1-21 (erst Zeichen, dann Farbe) in acht Stuecken
-mit bis zu sechs Zeilen in den versteckten Puffer. Die letzte Stufe hat
-sechs leere Eintraege und erzeugt stattdessen die neue rechte Spalte. HUD
-und Boden bleiben gleich und werden einmal beim Start gespiegelt.
+Spielfeldzeilen 0-24 (erst Zeichen, dann Farbe) in acht Stuecken
+mit bis zu sieben Zeilen in den versteckten Puffer. Die letzte Stufe kopiert eine Zeile, hat
+sechs leere Eintraege und erzeugt die neue rechte Spalte.
 Im Frame vor dem Umbruch erhaelt Spalte 39 des versteckten Puffers die
-naechste Weltspalte. Im unteren Rand (Raster `$F0`) schreibt der Umbruch nur
+naechste Weltspalte. Im unteren Rand (Raster `$FC`) schreibt der Umbruch nur
 noch Scroll zurueck auf 7 und `$FF14` auf den fertigen Puffer. Acht Pixel
 Matrix nach links und sieben Pixel Scroll nach rechts ergeben ein Pixel
 nach links.
@@ -86,15 +88,16 @@ rutschen. Bit 7 der Stueckliste waehlt Color-RAM. Der Test vergleicht das
 Byte mit `$80`: das `inc` des Index zwischen Laden und Aufruf ueberschreibt
 das Negative-Flag.
 
-Die TED-Registerzugriffe bleiben in `src/video.asm`. Der Code endet vor
+Video- und Scrollregister liegen in `src/video.asm`, Farb- und IRQ-Register
+in `src/gradient.asm`, die Tastaturabfrage in `src/input.asm`. Der Code endet vor
 `$1800`, sonst ueberschreibt die erste Spiegelkopie das Programm. Eine
 falsche Annahme zu TED-Registerbits darf nicht in die Spielmodule
 durchsickern.
 
 Die Standardgeschwindigkeit betraegt ein Pixel pro Frame. Damit ist die
 Bewegung optisch kontinuierlich und die Spielsimulation bleibt einfach:
-Weltpositionen werden in 8.8-Fixpunkt gespeichert, der sichtbare
-Horizontalscroll wird daraus abgeleitet.
+Ein 8-Bit-Weltspaltenzaehler und ein Feinscrollwert von 7 bis 0 bestimmen
+die horizontale Position; nur die Vogelphysik verwendet 8.8-Fixpunkt.
 
 ### Vogel und vertikale Pixelbewegung
 
@@ -123,11 +126,12 @@ Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 
 ### Farben und Animation
 
-Die erste Fassung nutzt ein kontrastreiches Himmel-/Rohr-/Boden-Schema mit
+Die aktuelle Fassung nutzt einen blauen Helligkeitsverlauf, gruene Rohre
+und einen schwarzen Vogel. Folgende optionale Effekte sind noch offen.
+Das Himmel-/Rohr-Schema arbeitet mit
 wenigen, bewusst gewaehlten TED-Farben. Zusatzeffekte duerfen das
 Frame-Budget nicht gefaehrden:
 
-- Bodenmuster scrollt mit derselben Weltgeschwindigkeit wie die Rohre.
 - Der Vogel hat einen ein Pixel grossen dunklen Rand oder Schatten, wenn die
   gewaehlte Zeichen-/Farbkonfiguration dies zulaesst.
 - Bei Kollision folgt ein kurzer Stillstand plus maximal acht Frames
@@ -158,8 +162,8 @@ Ein Neustart setzt den Generator zurueck und wiederholt dieselbe Folge.
 Punktwertung und steigende Schwierigkeit folgen separat.
 
 Kollision prueft die sichtbaren Vogelpixel gegen die festen, am Zeichenraster
-liegenden Rohrkanten, Decke und Boden. Dekorative Loecher in Rohrkappen und
-Bodenmustern gehoeren zur festen Flaeche. Vollstaendig leere Vogelzeichen
+liegenden Rohrkanten sowie die obere und untere Spielfeldkante bei 0 und
+200 Pixeln. Dekorative Loecher in Rohrkappen gehoeren zur festen Flaeche. Vollstaendig leere Vogelzeichen
 werden weder als Treffer gewertet noch gezeichnet; ihre Bildschirmzeichen
 und Farben bleiben erhalten. Dadurch ist direkter Kontakt ohne Grafikmischung
 moeglich, obwohl der Vogel einen bis zu 32 x 24 Pixel grossen Zeichenblock hat.
@@ -193,31 +197,54 @@ erst dort werden Bildschirm, Zeichensatz und Scrollregister aktualisiert.
 reset/init
   -> video + eigener Zeichensatz + Eingabe initialisieren
   -> Spielfeld in beide Textpuffer spiegeln
-  -> Titelbild
   -> neuer Lauf
   -> frame loop
        input
        physics (Kandidatenposition)
        collision -> bei Treffer bis zum letzten freien Pixel korrigieren
-       frame-sync auf der aufsteigenden Flanke von Raster $F0
+       frame-sync auf der aufsteigenden Flanke von Raster $FC
        bisheriges Vogelbild loeschen
-       obstacle generation / scoring               (noch offen)
+       neue Rohrspalte bei Bedarf erzeugen
        $FF07 schreiben, beim Umbruch auch $FF14
        ein Teilstueck in den versteckten Puffer kopieren
        Vogel auf den sichtbaren Puffer zeichnen
   -> game-over
-  -> Titelbild oder neuer Lauf
+  -> neuer Lauf bei erneuter SPACE-Flanke
 ```
 
-`frame-sync` wartet auf genau ein PAL-Frame-Ereignis am unteren Rand. Fuer den
-Sieben gleich hohe Rasterbaender teilen den aktiven Bildschirm in den blauen
+`frame-sync` wartet auf genau ein PAL-Frame-Ereignis am unteren Rand.
+Sieben nahezu gleich hohe Rasterbaender teilen den aktiven Bildschirm in den blauen
 Luminanzen 1 bis 7. Hintergrund und Seitenrahmen wechseln bei jedem Schritt
 auf derselben Rasterzeile. Der obere Rahmen bleibt bis zum Bildschirmbeginn
 auf Luminanz 0; am Beginn des unteren Rahmens wechseln Hintergrund und Rahmen
 auf TED-Farbe 9 mit Luminanz 5. Spielberechnung und Bildschirmaufbau bleiben
 ausserhalb des IRQ.
 
-Vorgesehene Quelldateien:
+### Raster-IRQ und buendige Oberkante
+
+Der eigene Hardware-IRQ nutzt `$FFFE/$FFFF`; auf dem 16-KiB-C16 liegen diese
+Bytes gespiegelt bei `$3FFE/$3FFF`. ROM wird ueber `$FF3F` ausgeblendet.
+A/X werden gesichert, Y bleibt unveraendert; Rueckkehr erfolgt mit `RTI`.
+Es gibt keinen Ruecksprung in den KERNAL. `$FF09` wird am Eintritt quittiert,
+Farbe, naechste IRQ-Adresse und kompletter 9-Bit-Vergleich werden im vorigen
+IRQ vorbereitet. `$FF0A` aktiviert nur den Raster-IRQ samt Vergleichsbit 8.
+
+Die sichtbaren Farbgrenzen liegen im TED-Zaehler bei `$04`, `$21`, `$3E`,
+`$5A`, `$76`, `$91`, `$AF`, `$CC` und `$113`. Die erste Grenze entspricht
+PAL-Bildzeile `$34` und der ersten Rohrzeile. Der obere Rahmen behaelt bis
+dorthin Luminanz 0. Der untere farbige Rahmen bleibt ausserhalb des Spielfelds;
+er ist kein Zeichenboden und keine vorgezogene Kollisionsflaeche.
+
+Normale Baender starten den IRQ eine Zeile vorher und synchronisieren ueber
+`$FF1E` auf die horizontale Austastluecke. Die erste Grenze benoetigt einen
+eigenen Handler: IRQ auf TED-Zeile `$02`, Warten ueber deren rechten Rand,
+dann Farbzugriffe nach dem Zeichenfetch in Zeile `$03`. So liegen beide
+Schreibzugriffe vor dem sichtbaren Beginn von Zeile `$04`. Die uebrigen
+Bandgrenzen vermeiden Zeichenfetch-Paare. Voraussetzung ist PAL mit
+Vertikalscroll 3 und normaler TED-Taktumschaltung. Kein Warten auf `$FF1D`
+im IRQ; die Spielschleife bleibt ausserhalb des Handlers.
+
+Quelldateien:
 
 | Datei | Verantwortung |
 | --- | --- |
@@ -226,8 +253,9 @@ Vorgesehene Quelldateien:
 | `src/memory.inc` | symbolische Speicherbelegung und Puffer |
 | `src/constants.inc` | Physik-, Spiel- und Kollisionskonstanten |
 | `src/video.asm` | TED-Setup, Frame-Sync, Feinscroll, Screen-Spalten |
-| `src/charset.asm` | statische Glyphen und dynamischer Vogelbereich |
-| `src/input.asm` | Flankenerkennung fuer Tastatur/Joystick |
+| `src/gradient.asm` | Rasterfarben, Hardware-IRQ und horizontale Synchronisierung |
+| `src/bird_masks.inc` | importierte Vogelmasken; statische Glyphen stehen in `main.asm` |
+| `src/input.asm` | Flankenerkennung fuer SPACE |
 | `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
 | `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
 | `src/render.asm` | Rohrspalten und Spielfeld |
@@ -238,8 +266,7 @@ Vorgesehene Quelldateien:
 Die Implementierung muss auf 16 KiB funktionieren; eine 64-KiB-Konfiguration
 darf nie vorausgesetzt werden. Die konkrete Byteaufstellung steht in
 `src/memory.inc`. Sie umfasst Code, Daten, beide Textpuffer, Zeichensatz und
-Stack. Der zweite Puffer belegt `$1800-$1FE7`. Ab `$3C00` bleiben 1 KiB
-Reserve. Ein Bitmap-Doppelpuffer ist damit ausgeschlossen.
+Stack. Der zweite Puffer belegt `$1800-$1FE7`. `$3C00-$3FFD` bleibt Reserve; `$3FFE/$3FFF` ist der Hardware-IRQ-Vektor. Ein Bitmap-Doppelpuffer ist damit ausgeschlossen.
 
 Die Frame-Schleife hat ein Budget von einem PAL-Frame. Die gewoehnliche
 Ausfuehrung aktualisiert nur Eingabe, Physik, einen Scrollwert, gegebenenfalls
@@ -253,9 +280,9 @@ Ausfuehrungszeit sichtbar.
 1. Der ACME-Build muss ohne Warnungen ein PRG produzieren und die
    Speicheraufstellung auf Bereichsueberschneidungen pruefen.
 2. In VICE wird der Build in PAL-C16/16-KiB-Konfiguration gestartet.
-   Die Tests decken Kaltstart, Neustart, alle acht horizontalen und vertikalen
-   Subpixel-Offsets, Rohrkanten, Boden/Decke, Punktvergabe und mindestens
-   fuenf Minuten Dauerlauf ab.
+   Die Release-Abnahme soll Kaltstart, Neustart, alle acht horizontalen und vertikalen
+   Subpixel-Offsets, Rohrkanten, untere/obere Spielfeldkante, Punktvergabe und mindestens
+   fuenf Minuten Dauerlauf abdecken.
 3. Ein deterministischer Testmodus akzeptiert einen festen
    Hindernis-Zufallsstartwert. Damit lassen sich Kollisionen und schwierige
    Rohrfolgen reproduzieren, ohne die Release-Zufallsfolge einzuschraenken.
@@ -270,3 +297,18 @@ Ausfuehrungszeit sichtbar.
 - NTSC-spezifisches Timing
 - Bitmap-Grafik oder ein Verschieben der ganzen Matrix im sichtbaren Frame.
   Der zweite Textpuffer ist der vorgesehene Scrollweg und gehoert dazu.
+
+## Aktueller Pruefstand
+
+Build und Lint bestehen. Der Stand ohne Zeichenboden bestand 1.024
+Pufferwechsel, 3.000 automatische Spielframes, 79.872 Pixelkollisions- und
+3.424 Render-/Restore-Faelle. Der neue untere Rand wurde fuer alle vier
+bisher im Kollisionsorakel enthaltenen Posen und acht Scrollphasen geprueft.
+Die buendige Oberkante bestand den IRQ-Regressionstest und 3.928 gemessene
+Farbzugriffe in VICE ohne Verletzung der sichtbaren Zeitfenster.
+
+Der bestehende Animationstest nimmt vier statt der sechs importierten
+GIF-Frames an und bricht deshalb ab; nachfolgende Tests laufen im normalen
+Aufruf nicht. Die Erweiterung auf sechs Posen bleibt offen. Ein erneuter
+Fuenf-Minuten-Dauerlauf des neuesten Stands und echte C16-Hardwaretests
+stehen aus. Reproduzierbare Test- und Tracebefehle stehen im `README.md`.

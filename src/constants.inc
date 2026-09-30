@@ -9,8 +9,8 @@ SCROLL_SLICE_COUNT = 8
 ; The scroll register and the buffer flip are stored here.
 RASTER_BORDER = $fc
 ; TED raster-counter coordinates: active 25-row screen is $04..$CB.
-; Start in the upper border, before the first character-fetch pair.
-BACKGROUND_GRADIENT_FIRST_RASTER = $02
+; Match the first visible character row.
+BACKGROUND_GRADIENT_FIRST_RASTER = $04
 ; Low nibble is TED color 13 (blue); bits 4-6 set luminance 0..7.
 BG_GRADIENT_HUE = $0d
 BG_GRADIENT_START_COLOR = BG_GRADIENT_HUE
@@ -30,12 +30,11 @@ PIPE_GAP_MAX = 10
 PIPE_START_GAP = 7
 PIPE_GAP_MAX_STEP = 2
 ; A gap moves by at most two rows (16 pixels) between successive pipes.
-SCROLL_ROWS_PER_SLICE = 6
+SCROLL_ROWS_PER_SLICE = 7
 
 GLYPH_SKY = 0
 GLYPH_PIPE_BODY = 1
 GLYPH_PIPE_CAP = 2
-GLYPH_GROUND = 3
 
 ; A 20x14 mask plus seven fine-scroll pixels needs four columns, three rows.
 BIRD_HEIGHT = 14
@@ -55,9 +54,6 @@ BIRD_GRAVITY = $18
 BIRD_FLAP_VELOCITY = $fe
 BIRD_MAX_FALL_SPEED = 3
 
-; Rows below the sky are a solid collision plane (pattern holes ignored).
-GROUND_FIRST_ROW = 22
-
 ; Collision's endpoint test must not jump across an eight-pixel solid cell.
 ; Fractional carry can add one pixel to the integer downward velocity.
 !if BIRD_MAX_FALL_SPEED >= 7 {
@@ -70,9 +66,9 @@ GROUND_FIRST_ROW = 22
 !if PIPE_RANDOM_SEED = 0 {
     !error "pipe RNG seed must be nonzero"
 }
-!if PIPE_GAP_MIN < 2 {
-    !error "top pipe needs room below the HUD"
+!if PIPE_GAP_MIN < 1 {
+    !error "top pipe needs at least one row"
 }
-!if PIPE_GAP_MAX + PIPE_GAP_HEIGHT >= GROUND_FIRST_ROW {
-    !error "bottom pipe needs room above the ground"
+!if PIPE_GAP_MAX + PIPE_GAP_HEIGHT >= SCREEN_ROWS {
+    !error "bottom pipe needs at least one row"
 }

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 S = {n: int(v, 16) for n, v in re.findall(r'^\s*(\w+)\s*=\s*\$([0-9a-f]+)',
                                         (ROOT / 'build/flappy.sym').read_text(), re.M)}
 COLORS = [0x1d, 0x2d, 0x3d, 0x4d, 0x5d, 0x6d, 0x7d, 0x59, 0x0d]
-LINES = [2, 33, 62, 90, 118, 145, 175, 204, 275]
+LINES = [4, 33, 62, 90, 118, 145, 175, 204, 275]
 
 
 class Memory(list):
@@ -23,8 +23,9 @@ class Memory(list):
     def __getitem__(self, addr):
         if addr == 0xff1e:
             # Cross the threshold once; real timing is checked with VICE.
-            self.horizontal ^= 1
-            return 0 if self.horizontal else 0xa0
+            value = (0, 0xa0, 0xb0, 0)[self.horizontal]
+            self.horizontal = (self.horizontal + 1) % 4
+            return value
         return super().__getitem__(addr)
 
 
@@ -42,11 +43,13 @@ for restart in range(2):
             break
     else:
         raise AssertionError('initialization did not return')
-    assert cpu.WordAt(0xfffe) == S['background_gradient_irq']
+    assert cpu.WordAt(0xfffe) == S['background_gradient_top_irq']
     for event in range(27):
         index = event % 9
+        handler = "background_gradient_top_irq" if index == 0 else "background_gradient_irq"
+        assert cpu.WordAt(0xfffe) == S[handler]
         compare = cpu.memory[0xff0b] | ((cpu.memory[0xff0a] & 1) << 8)
-        assert compare == LINES[index] - 1
+        assert compare == LINES[index] - (2 if index == 0 else 1)
         assert cpu.memory[0xff0a] & 0xfe == 2
         cpu.a, cpu.x, cpu.y = (event * 17) & 255, 255 - event, event * 7
         cpu.p = 0x30 | (event & 0xcb)  # Vary N/V/D/Z/C; IRQ enabled.
@@ -65,11 +68,13 @@ print('IRQ preserves registers, flags and stack; 9-bit sequence and restart pass
 
 if len(sys.argv) > 1:
     trace = Path(sys.argv[1]).read_text()
-    stores = {S['gradient_color'] + 2: 'ff19', S['gradient_color'] + 5: 'ff15'}
+    stores = {S['gradient_border_store']: 'ff19', S['gradient_background_store']: 'ff15',
+              S['gradient_top_border_store']: 'ff19', S['gradient_top_background_store']: 'ff15'}
     counts = Counter()
     pattern = (r'Trace store (ff19|ff15)\)\s+(\d+)/\$\w+,\s+(\d+)/\$\w+'
-               r'\n.C:(\w+) .*?A:(\w+)')
-    for reg, line, cycle, pc, color in re.findall(pattern, trace):
+               r'\n.C:(\w+) .*?A:(\w+) X:(\w+)')
+    for reg, line, cycle, pc, a, x in re.findall(pattern, trace):
+        color = x if int(pc, 16) in (S['gradient_top_border_store'], S['gradient_top_background_store']) else a
         if int(pc, 16) not in stores:
             continue  # Exclude KERNAL boot and video initialization.
         assert stores[int(pc, 16)] == reg

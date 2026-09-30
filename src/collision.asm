@@ -91,7 +91,7 @@ prepared_frame_done:
 
 ; A nonempty candidate glyph may occupy only sky. Since solid obstacle
 ; faces lie on cell boundaries, this tests actual bird pixels, not its
-; padded 32x24 allocation. Decorative pipe-cap/ground holes stay solid.
+; padded 32x24 allocation. Decorative pipe-cap holes stay solid.
 ; Read current column + 1 when testing the pending matrix wrap.
 check_bird_collision:
     lda #BIRD_SCREEN_COLUMN
@@ -121,7 +121,7 @@ collision_cell:
     lda BIRD_OCCUPIED,x
     beq collision_cell_clear
     lda ROW_INDEX
-    cmp #GROUND_FIRST_ROW
+    cmp #SCREEN_ROWS
     bcs bird_collision
     lda (SCREEN_DESTINATION),y
     beq collision_cell_clear

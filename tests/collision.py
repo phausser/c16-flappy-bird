@@ -69,10 +69,10 @@ def oracle(name, bird_y, world, phase, pending):
     for x, y in PIXELS[name]:
         py = bird_y + y
         col = 12 + (7 - next_phase + x) // 8
-        if py < 0 or py >= 176:
+        if py < 0 or py >= 200:
             return True
         gap = WORLD_GAPS[next_world + col]
-        if gap and (8 <= py < gap * 8 or (gap + 9) * 8 <= py < 176):
+        if gap and (0 <= py < gap * 8 or (gap + 9) * 8 <= py < 200):
             return True
     return False
 
@@ -101,7 +101,7 @@ def screen_state():
 count = 0
 # Edge neighborhoods include every vertical offset; all horizontal phases,
 # masks, both scroll choices, and pipes on either side of the bird.
-ys = list(range(-5, 9)) + list(range(38, 58)) + list(range(109, 131)) + list(range(158, 178))
+ys = list(range(-5, 9)) + list(range(38, 58)) + list(range(109, 131)) + list(range(158, 178)) + list(range(182, 202))
 for world in (0, 9, 10, 11, 12, 13, 14, 15, 31, 34, 36, 38, 60):
     for phase in range(8):
         scene(world, phase)
@@ -159,6 +159,29 @@ for world in (0, 12, 36, 60):
                 render_count += 1
 print(f'{render_count} render/restore cases passed', flush=True)
 
+# The removed ground rows are flyable; only the actual 200-pixel edge
+# stops a fall. Test every pose and fine-scroll phase against its last pixel.
+for name in MASKS:
+    last_safe_y = 199 - max(y for _, y in PIXELS[name])
+    for phase in range(8):
+        scene(0, phase)
+        call('clear_bird')
+        mask(name)
+        put('BIRD_FRAME_INDEX', MASKS.index(name))
+        put('BIRD_ANIM_TIMER', 5)
+        put('BIRD_Y_POSITION', last_safe_y - 1)
+        put('BIRD_Y_FRACTION', 0)
+        put('BIRD_VELOCITY', 3)
+        put('BIRD_VELOCITY_FRACTION', 0)
+        call('compose_bird')
+        call('render_bird')
+        call('prepare_bird_frame')
+        assert get('GAME_OVER') == 1
+        assert get('BIRD_Y_POSITION') == last_safe_y
+        assert not oracle(name, last_safe_y, 0, phase, 0)
+        assert oracle(name, last_safe_y + 1, 0, phase, 0)
+print('All poses stop at the 200-pixel screen edge; former ground is flyable', flush=True)
+
 # Exact GIF cadence: initialization displays frame 0; each pose lasts five
 # PAL frames, including wraparound. Falling must not replace the supplied art.
 scene()
@@ -202,7 +225,7 @@ def position(y, velocity, name):
 max_cycles = 0
 # Fast downward and upward movement stops partway through the proposed step.
 for world, start, velocity, expected, name in (
-    (0, 161, 3, 162, 'BIRD_MASK_0'),
+    (0, 185, 3, 187, 'BIRD_MASK_0'),
     (12, 113, 3, 114, 'BIRD_MASK_0'),
     (12, 56, -2, 55, 'BIRD_MASK_0'),
     (0, 0, -2, -1, 'BIRD_MASK_0'),

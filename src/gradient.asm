@@ -2,16 +2,16 @@
 ; C16, the RAM IRQ vector at $FFFE mirrors $3FFE in the safety reserve.
 initialise_background_gradient:
     sei
-    lda #<background_gradient_irq
+    lda #<background_gradient_top_irq
     sta HARDWARE_IRQ_VECTOR
-    lda #>background_gradient_irq
+    lda #>background_gradient_top_irq
     sta HARDWARE_IRQ_VECTOR + 1
     sta TED_RAM_ENABLE
     lda #0
     sta BACKGROUND_GRADIENT_INDEX
     lda #$1d
     sta gradient_color + 1
-    lda #BACKGROUND_GRADIENT_FIRST_RASTER - 1
+    lda #BACKGROUND_GRADIENT_FIRST_RASTER - 2
     sta TED_RASTER_COMPARE
     lda #BG_GRADIENT_START_COLOR
     sta TED_COLOR_BG
@@ -23,19 +23,12 @@ initialise_background_gradient:
     cli
     rts
 
-; Prepare the immediate color in the previous IRQ: no table indexing
-; or subroutine calls select the color before the two stores.
-; X is saved only afterwards; Y is untouched. Never enter the KERNAL dispatcher or its exit routine.
+; Normal bands retain the short entry path. Their color operand is prepared
+; by the preceding IRQ; X is saved only after the two color writes.
 background_gradient_irq:
     pha
     lda TED_IRQ_STATUS
     sta TED_IRQ_STATUS
-; Enter one line ahead and wait for the right-hand horizontal blank.
-; $FF1E exposes the horizontal counter; $A0 is just before the blank.
-; The compare/branch/load delay puts the border store beyond the canvas,
-; and the background store still precedes the next character window.
-; Both sides of each boundary avoid character-fetch lines (low bits 3/4).
-; Otherwise a bus steal between the two stores can expose a partial line.
 gradient_wait_visible:
     lda TED_RASTER_HORIZONTAL
     cmp #$a0
@@ -46,10 +39,46 @@ gradient_wait_blank:
     bcc gradient_wait_blank
 gradient_color:
     lda #$1d
+gradient_border_store:
     sta TED_BORDER_COLOR
+gradient_background_store:
     sta TED_COLOR_BG
     txa
     pha
+    jmp gradient_schedule_next
+
+; At the top, enter on line 2 and wait across its right blank. The line-3
+; character fetch holds the CPU until late in that line. Stores immediately
+; after that fetch fall in the right blank, before line 4 displays row 0.
+; A separate hardware vector keeps this extra work out of the other bands.
+background_gradient_top_irq:
+    pha
+    lda TED_IRQ_STATUS
+    sta TED_IRQ_STATUS
+    txa
+    pha
+    ldx #$1d
+gradient_top_visible:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$9c
+    bcs gradient_top_visible
+gradient_top_blank:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$9c
+    bcc gradient_top_blank
+gradient_top_wrap:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$b0
+    bcc gradient_top_wrap
+gradient_top_fetch:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$b0
+    bcs gradient_top_fetch
+gradient_top_border_store:
+    stx TED_BORDER_COLOR
+gradient_top_background_store:
+    stx TED_COLOR_BG
+gradient_schedule_next:
     ldx BACKGROUND_GRADIENT_INDEX
     inx
     cpx #BACKGROUND_GRADIENT_LEVELS + 2
@@ -57,6 +86,18 @@ gradient_color:
     ldx #0
 gradient_next_ready:
     stx BACKGROUND_GRADIENT_INDEX
+    cpx #0
+    beq gradient_arm_top
+    lda #<background_gradient_irq
+    sta HARDWARE_IRQ_VECTOR
+    lda #>background_gradient_irq
+    bne gradient_arm_vector
+gradient_arm_top:
+    lda #<background_gradient_top_irq
+    sta HARDWARE_IRQ_VECTOR
+    lda #>background_gradient_top_irq
+gradient_arm_vector:
+    sta HARDWARE_IRQ_VECTOR + 1
     lda background_gradient_colors,x
     sta gradient_color + 1
     lda background_gradient_rasters,x
@@ -76,7 +117,7 @@ background_gradient_colors:
     !byte $1d, $2d, $3d, $4d, $5d, $6d, $7d
     !byte FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
 background_gradient_rasters:
-    !byte BACKGROUND_GRADIENT_FIRST_RASTER - 1, $20, $3d, $59, $75, $90, $ae
+    !byte BACKGROUND_GRADIENT_FIRST_RASTER - 2, $20, $3d, $59, $75, $90, $ae
     !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 1), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
 background_gradient_high:
     !fill BACKGROUND_GRADIENT_LEVELS, 2
