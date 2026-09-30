@@ -13,13 +13,17 @@ basic_end:
 
 * = CODE_START
 
+; Interrupts stay off for the whole run: frame sync is a raster poll and
+; input is a direct matrix read, so nothing here needs the KERNAL's default
+; IRQ. Leaving it enabled would let its jiffy-clock/keyboard-scan handler
+; fire ~50x/sec against our own zero-page state and screen RAM at
+; unpredictable points, which is a likely source of intermittent corruption.
 start:
     sei
     jsr initialise_video
     jsr render_playfield
     jsr initialise_bird
     jsr initialise_input
-    cli
 
 main_loop:
     jsr wait_for_frame
@@ -37,12 +41,11 @@ main_loop:
 
 * = CHARSET_RAM
 !fill 8, 0
-; Glyphs 1-3 form the playfield; glyphs 4-7 are the dynamic bird.
+; Glyphs 1-3 form the playfield. Glyphs 4-9 are the dynamic bird area (left
+; column rows 0-2, then right column rows 0-2); render_bird overwrites them
+; every frame, so they start out blank.
 !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
 !byte $7e, $ff, $ff, $ff, $ff, $ff, $ff, $7e
 !byte $aa, $55, $aa, $55, $aa, $55, $aa, $55
-!byte $00, $00, $03, $0f, $1f, $3f, $3f, $3f
-!byte $00, $00, $c0, $f0, $f8, $fc, $fc, $fc
-!byte $3f, $3f, $1f, $0f, $03, $00, $00, $00
-!byte $fc, $fc, $f8, $f0, $c0, $00, $00, $00
-!fill CHARSET_SIZE - 64, 0
+!fill 48, 0
+!fill CHARSET_SIZE - 80, 0

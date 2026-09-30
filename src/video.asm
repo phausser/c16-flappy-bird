@@ -4,10 +4,13 @@ initialise_video:
     lda #TED_CONTROL2_TEXT_40_COLS
     sta TED_CONTROL2
 
+    ; $FF12 bit 2 selects chargen ROM (1) or RAM (0).
     lda TED_MISC
     and #$fb
     sta TED_MISC
-    lda #(CHARSET_RAM >> 10)
+    ; $FF13 bits 7-2 are chargen A15-A10. 128-character mode (control 2
+    ; bit 7 clear) keeps the 1 KiB step, so $34 addresses $3400.
+    lda #((CHARSET_RAM >> 8) & $fc)
     sta TED_CHAR_ADDR
     lda #>SCREEN_RAM
     sta TED_VIDEO_ADDR
@@ -44,11 +47,12 @@ advance_scroll:
 
     lda #INITIAL_SCROLL_OFFSET
     sta SCROLL_OFFSET
+    jsr commit_scroll_offset
     jsr shift_screen_left
     inc WORLD_COLUMN
     inc COLUMN_UPDATE_COUNTER
     ldx #SCREEN_COLUMNS - 1
-    jsr render_world_column
+    jmp render_world_column
 
 commit_scroll_offset:
     lda #TED_CONTROL2_TEXT_40_COLS
@@ -57,52 +61,61 @@ commit_scroll_offset:
     rts
 
 ; Advance the character map only once for each eight hardware-scroll pixels.
-; This copies the visible map rather than redrawing the playfield.
+; Sky, gap and ground rows are identical for every world column, so only the
+; pipe rows (top and bottom band) ever need their columns moved. Shifting
+; just those two six-row bands instead of the full 25-row screen keeps the
+; copy well inside the frame budget and stops the raster from ever catching
+; a row mid-update.
 shift_screen_left:
-    lda #<SCREEN_RAM
+    lda #<(SCREEN_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS))
     sta SCREEN_DESTINATION
-    lda #>SCREEN_RAM
+    lda #>(SCREEN_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS))
     sta SCREEN_DESTINATION + 1
-    lda #<(SCREEN_RAM + 1)
+    lda #<(SCREEN_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS) + 1)
     sta SCREEN_SOURCE
-    lda #>(SCREEN_RAM + 1)
+    lda #>(SCREEN_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS) + 1)
     sta SCREEN_SOURCE + 1
-    jsr shift_columns_left
+    jsr shift_block
 
-    lda #<COLOR_RAM
+    lda #<(SCREEN_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS))
     sta SCREEN_DESTINATION
-    lda #>COLOR_RAM
+    lda #>(SCREEN_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS))
     sta SCREEN_DESTINATION + 1
-    lda #<(COLOR_RAM + 1)
+    lda #<(SCREEN_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS) + 1)
     sta SCREEN_SOURCE
-    lda #>(COLOR_RAM + 1)
+    lda #>(SCREEN_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS) + 1)
+    sta SCREEN_SOURCE + 1
+    jsr shift_block
+
+    lda #<(COLOR_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS))
+    sta SCREEN_DESTINATION
+    lda #>(COLOR_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS))
+    sta SCREEN_DESTINATION + 1
+    lda #<(COLOR_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS) + 1)
+    sta SCREEN_SOURCE
+    lda #>(COLOR_RAM + (PIPE_TOP_FIRST_ROW * SCREEN_COLUMNS) + 1)
+    sta SCREEN_SOURCE + 1
+    jsr shift_block
+
+    lda #<(COLOR_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS))
+    sta SCREEN_DESTINATION
+    lda #>(COLOR_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS))
+    sta SCREEN_DESTINATION + 1
+    lda #<(COLOR_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS) + 1)
+    sta SCREEN_SOURCE
+    lda #>(COLOR_RAM + (PIPE_BOTTOM_FIRST_ROW * SCREEN_COLUMNS) + 1)
     sta SCREEN_SOURCE + 1
 
-shift_columns_left:
-    ldx #SCREEN_ROWS
-shift_row:
+; Falls through so the final block's rts returns to shift_screen_left's
+; caller. The last byte of each row is left untouched (it bleeds in one byte
+; from the following row), but render_world_column overwrites every row's
+; rightmost column unconditionally right after this runs.
+shift_block:
     ldy #0
-shift_cell:
+shift_block_byte:
     lda (SCREEN_SOURCE),y
     sta (SCREEN_DESTINATION),y
     iny
-    cpy #SCREEN_COLUMNS - 1
-    bcc shift_cell
-
-    clc
-    lda SCREEN_DESTINATION
-    adc #SCREEN_COLUMNS
-    sta SCREEN_DESTINATION
-    bcc destination_advanced
-    inc SCREEN_DESTINATION + 1
-destination_advanced:
-    clc
-    lda SCREEN_SOURCE
-    adc #SCREEN_COLUMNS
-    sta SCREEN_SOURCE
-    bcc source_advanced
-    inc SCREEN_SOURCE + 1
-source_advanced:
-    dex
-    bne shift_row
+    cpy #PIPE_BLOCK_LENGTH
+    bne shift_block_byte
     rts

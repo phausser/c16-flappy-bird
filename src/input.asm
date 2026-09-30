@@ -4,15 +4,18 @@ initialise_input:
     sta FLAP_PRESSED
     rts
 
-; SPACE is row 7, column 4 in the C16 keyboard matrix. A new press produces
+; SPACE is row 7, column 4 of the C16 matrix (same map the KERNAL scans).
+; The row is driven by the 6529 at $FD30, active low; writing $FF08 only
+; latches whatever row $FD30 is already driving. A new press produces
 ; exactly one frame of FLAP_PRESSED; holding the key does not retrigger it.
 read_input:
     lda #0
     sta FLAP_PRESSED
-    lda #$ef
+    lda #$7f
+    sta TED_KEYBOARD_ROW
     sta TED_KEYBOARD
     lda TED_KEYBOARD
-    and #$80
+    and #$10
     bne flap_released
 
     lda FLAP_HELD

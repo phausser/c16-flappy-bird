@@ -40,22 +40,21 @@ zaehlt exakt sichtbar mit PAL-Frame-Tempo.
 - [x] Einen Messrahmen oder Debugzaehler einbauen, um fehlende/doppelte
   Nachfuellvorgaenge aufzudecken.
 
-**Abnahme (offen):** Ein Rohr und das Bodenmuster bewegen sich mindestens 30
-Sekunden ohne Acht-Pixel-Sprung oder Spaltenluecke durch den sichtbaren
-Bereich.
+**Abnahme:** Ein Rohr und das Bodenmuster bewegen sich mindestens 30 Sekunden
+ohne Acht-Pixel-Sprung oder Spaltenluecke durch den sichtbaren Bereich.
 
 ## Meilenstein 2 -- Vogel mit Pixelbewegung
 
-- [ ] Vogelmasken fuer mindestens drei Fluegelstellungen als 16 x 16-Bitdaten
+- [x] Vogelmasken fuer mindestens drei Fluegelstellungen als 16 x 16-Bitdaten
   in den Zeichensatz-/Assetbereich aufnehmen.
-- [ ] Dynamische Vogelglyphen und die erforderlichen Bildschirmzellen
+- [x] Dynamische Vogelglyphen und die erforderlichen Bildschirmzellen
   reservieren.
-- [ ] 8.8-Fixpunkt-Y-Position, Geschwindigkeit, Schwerkraft, Flap-Impuls und
+- [x] 8.8-Fixpunkt-Y-Position, Geschwindigkeit, Schwerkraft, Flap-Impuls und
   Geschwindigkeitsgrenzen implementieren.
-- [ ] Maskenzeilen mit den unteren drei Y-Bits in die dynamischen Glyphen
+- [x] Maskenzeilen mit den unteren drei Y-Bits in die dynamischen Glyphen
   verschieben; Ueberlauf in die dritte Zeichenzeile korrekt behandeln.
-- [ ] Fluegelphase und Fallpose aus Flugzustand/Geschwindigkeit waehlen.
-- [ ] Frueheres Vogelbild loeschen, neues Bild setzen und Kanten an oberen
+- [x] Fluegelphase und Fallpose aus Flugzustand/Geschwindigkeit waehlen.
+- [x] Frueheres Vogelbild loeschen, neues Bild setzen und Kanten an oberen
   sowie unteren Spielfeldgrenzen pruefen.
 
 **Abnahme:** Der Vogel folgt jeder Eingabe ohne merkliche Latenz, steigt und
