@@ -79,11 +79,11 @@ vollstaendig dargestellt.
   definieren.
 - [x] Neue Rohre nur beim Nachfuellen der rechten Weltspalte einplanen und
   daraus die sichtbaren Rohrzeichen erzeugen.
-- [x] Kollision vor dem Zeichnen gegen Rohre und die Spielfeldkanten bei 0/200 Pixeln pruefen;
+- [x] Kollision vor dem Zeichnen gegen Rohre und die Spielfeldkanten bei 0/192 Pixeln pruefen;
   nur sichtbare Vogelpixel beruecksichtigen, leere Vogelzeichen auslassen.
 - [x] Bei Kollision bis zum letzten freien Pixel zuruecksetzen und einfrieren;
   Neustart durch erneuten Tastendruck.
-- [ ] Punkte beim einmaligen Passieren eines Rohrs vergeben; HUD ohne
+- [x] Punkte beim einmaligen Passieren eines Rohrs vergeben; HUD ohne
   Full-Screen-Redraw aktualisieren.
 - [ ] Start-, Spiel-, Kollisions- und Game-over-Zustaende implementieren,
   inklusive explizitem Neustart per Eingabe.
@@ -116,16 +116,16 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 
 - [x] 1.024 Pufferwechsel und 3.000 automatische Spielframes ohne Zeichenboden.
 - [x] 79.872 Pixelkollisions- und 3.424 Render-/Restore-Faelle bestanden.
-- [x] Untere Bildschirmkante bei 200 Pixeln fuer die vier bisher getesteten
-  Posen und alle acht Scrollphasen verifiziert.
+- [x] Untere Spielfeldkante bei 192 Pixeln fuer die vier bisher getesteten
+  Posen und alle acht Scrollphasen verifiziert. Die Bodenzeile ist Kollision.
 - [x] IRQ-Register, Stack, Vektorwechsel, Neustart und 9-Bit-Rasterfolge geprueft.
 - [x] 3.874 Farbzugriffe der Multicolor-Fassung mit buendiger Oberkante in VICE im erlaubten Zeitfenster.
 - [ ] `tests/collision.py` auf sechs statt vier GIF-Frames erweitern; die
   bestehende Kadenz-Assertion bricht derzeit ab. Danach auch die dahinter
   liegenden Kontakt-, Freeze- und Neustarttests vollstaendig ausfuehren.
 - [ ] Neue Rasterroutine auf echter PAL-C16-Hardware pruefen.
-- [ ] HUD-Layout fuer die spaetere Punktanzeige bestimmen, ohne wieder eine
-  leere obere Rohrzeile einzufuehren.
+- [x] HUD-Layout: die letzte Zeichenzeile ist Boden und zentrierte Punktzahl,
+  ohne eine leere obere Rohrzeile.
 
 ## Technische Risiken und Entscheidungen
 

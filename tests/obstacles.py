@@ -68,8 +68,23 @@ def expected_cell(world, row, col):
     return S['GLYPH_SKY'], S['TED_SKY_COLOR']
 
 
+def score_value():
+    return cpu.memory[S['SCORE']] | (cpu.memory[S['SCORE'] + 1] << 8)
+
+
+def score_cells(value):
+    digits = str(value)
+    start = 1 + (38 - len(digits)) // 2
+    glyphs = [0] * 40
+    inks = [0] * 40
+    for offset, char in enumerate(digits):
+        glyphs[start + offset] = S['GLYPH_DIGIT_0'] + int(char)
+        inks[start + offset] = S['TED_SCORE_COLOR']
+    return glyphs, inks
+
+
 def check_buffer(world, screen, color, bird=False):
-    for row in range(25):
+    for row in range(24):
         for col in range(40):
             glyph, ink = expected_cell(world, row, col)
             address = row * 40 + col
@@ -78,6 +93,11 @@ def check_buffer(world, screen, color, bird=False):
                 assert glyph == 0, ('bird overwrote pipe', world, row, col)
             else:
                 assert (actual, cpu.memory[color + address]) == (glyph, ink), (world, row, col)
+    glyphs, inks = score_cells(score_value())
+    for col in range(40):
+        address = 24 * 40 + col
+        assert cpu.memory[screen + address] == glyphs[col], (world, col, score_value())
+        assert cpu.memory[color + address] == inks[col], (world, col, score_value())
 
 
 cpu.memory[S['commit_video_ptr']] = 0x60

@@ -23,6 +23,8 @@ restart_round:
     sei
     lda #0
     sta GAME_OVER
+    sta SCORE
+    sta SCORE + 1
     jsr initialise_video
     jsr initialise_obstacles
     jsr render_playfield
@@ -39,7 +41,10 @@ main_loop:
     beq play_frame
     lda FLAP_PRESSED
     bne restart_round
+    ; The floor IRQ leaves $FF07 at scroll 0. Restore the frozen playfield
+    ; scroll or the next frame would be stuck there, score row included.
     jsr wait_for_frame
+    jsr commit_scroll_offset
     jmp main_loop
 play_frame:
     jsr prepare_bird_frame
@@ -48,8 +53,11 @@ play_frame:
     jsr wait_for_frame
     jsr clear_bird
     lda SCROLL_PENDING
-    beq draw_accepted_bird
+    beq hold_scroll
     jsr advance_scroll
+    jmp draw_accepted_bird
+hold_scroll:
+    jsr commit_scroll_offset
 draw_accepted_bird:
     jsr render_bird
     jmp main_loop
@@ -68,10 +76,14 @@ draw_accepted_bird:
     !error "program overlaps the hidden text buffer"
 }
 
-; Static animation masks live in otherwise unused RAM; the executable code
-; itself must stay below the hidden screen buffers.
+; Score drawing lives above the hidden text buffer. The imported masks follow
+; it; both stay below the game-state RAM at $3000.
 * = $2000
+!source "src/score.asm"
 !source "src/bird_masks.inc"
+!if * > GAME_STATE_RAM {
+    !error "score code overlaps game state"
+}
 
 * = CHARSET_RAM
 !fill 8, 0
@@ -85,4 +97,23 @@ draw_accepted_bird:
 !fill 8, %01111111
 !fill 8, %10111010
 !fill BIRD_GLYPH_BYTES, 0
-!fill CHARSET_SIZE - 32 - BIRD_GLYPH_BYTES, 0
+; Glyphs 16-25. The ink sits in the lower five pixels, with two-pixel
+; strokes and square corners. Bit 7 is the leftmost pixel.
+digit_glyphs:
+    !byte %00000000, %00000000, %00000000, %01111110, %01100110, %01100110, %01100110, %01111110
+    !byte %00000000, %00000000, %00000000, %00011000, %00011000, %00011000, %00011000, %00011000
+    !byte %00000000, %00000000, %00000000, %01111110, %00000110, %01111110, %01100000, %01111110
+    !byte %00000000, %00000000, %00000000, %01111110, %00000110, %01111110, %00000110, %01111110
+    !byte %00000000, %00000000, %00000000, %01100110, %01100110, %01111110, %00000110, %00000110
+    !byte %00000000, %00000000, %00000000, %01111110, %01100000, %01111110, %00000110, %01111110
+    !byte %00000000, %00000000, %00000000, %01111110, %01100000, %01111110, %01100110, %01111110
+    !byte %00000000, %00000000, %00000000, %01111110, %00000110, %00000110, %00000110, %00000110
+    !byte %00000000, %00000000, %00000000, %01111110, %01100110, %01111110, %01100110, %01111110
+    !byte %00000000, %00000000, %00000000, %01111110, %01100110, %01111110, %00000110, %01111110
+!if digit_glyphs <> CHARSET_RAM + GLYPH_DIGIT_0 * 8 {
+    !error "score digits must follow the bird glyphs"
+}
+!if * - digit_glyphs <> 80 {
+    !error "score digits must be ten glyphs"
+}
+!fill CHARSET_SIZE - (* - CHARSET_RAM), 0

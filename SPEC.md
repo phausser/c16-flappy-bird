@@ -25,8 +25,9 @@ kein Ziel des ersten Meilensteins.
   die Fluegelbewegung laeuft auch beim Fallen weiter.
 
 Aktuell umgesetzt sind SPACE-Steuerung, Scrollen, Rohrfolge, Pixelkollision,
-Einfrieren und Neustart. FIRE, Punkte, Bestwert, Titelbild und steigende
-Schwierigkeit sind noch offen; siehe `TODO.md`.
+Einfrieren, Neustart und ein Punkt pro geschafftem Rohr in der festen
+Bodenzeile. FIRE, Bestwert, Titelbild und steigende Schwierigkeit sind noch
+offen; siehe `TODO.md`.
 
 ## Zielplattform und Werkzeugkette
 
@@ -49,8 +50,10 @@ Initialisierung, Laden und Debug-Ausgaben duerfen die KERNAL-Routinen nutzen.
 Die Spielansicht verwendet den TED-Textmodus mit einem eigenen Zeichensatz.
 Die Matrix ist 40 x 25 Zeichen zu 8 x 8 Pixeln. Der TED zeigt 38 Spalten
 (`$FF07` Bit 3 geloescht), damit der Rand die angeschnittene Scroll-Zelle
-verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Das Spielfeld nutzt alle 25 Reihen ohne Boden- oder HUD-Streifen.
-Rohre reichen oben und unten bis an den Rand der Zeichenmatrix. Die Rohre bestehen aus drei wiederverwendbaren Multicolor-Zeichen
+verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Die Zeilen 0-23 sind das Spielfeld:
+Rohre reichen dort oben und unten bis an den Rand der Zeichenmatrix. Zeile 24 ist der feste Boden
+und die Punkteanzeige. Sie scrollt nicht mit, weder im Feinscroll noch beim Spaltenschub.
+Die Rohre bestehen aus drei wiederverwendbaren Multicolor-Zeichen
 fuer linken Streifen, Mitte und rechten Streifen, vorerst ohne Abschluss. Das spart RAM und erlaubt unterschiedliche Hoehen allein durch
 Umfuellen der Screen-Map.
 
@@ -88,9 +91,9 @@ alten Spalte standen.
 Stattdessen gibt es zwei Textpuffer. Sichtbar starten Farbe `$0800` und
 Screen `$0C00` (`$FF14` = `$0C`). Versteckt liegen Farbe `$1800` und Screen
 `$1C00` (`$FF14` = `$18`). In den acht Frames bis zum Umbruch wandern die
-Spielfeldzeilen 0-24 (erst Zeichen, dann Farbe) in acht Stuecken
-mit bis zu sieben Zeilen in den versteckten Puffer. Die letzte Stufe kopiert eine Zeile, hat
-sechs leere Eintraege und erzeugt die neue rechte Spalte.
+Spielfeldzeilen 0-23 (erst Zeichen, dann Farbe) in acht Stuecken
+mit bis zu sieben Zeilen in den versteckten Puffer. Zeile 24 fehlt in dieser Liste.
+Acht der 56 Plaetze bleiben leer; die neue rechte Spalte entsteht, wenn das achte Stueck fertig ist.
 Im Frame vor dem Umbruch erhaelt Spalte 39 des versteckten Puffers die
 naechste Weltspalte. Im unteren Rand (Raster `$FC`) schreibt der Umbruch nur
 noch Scroll zurueck auf 7 und `$FF14` auf den fertigen Puffer. Acht Pixel
@@ -106,8 +109,9 @@ Byte mit `$80`: das `inc` des Index zwischen Laden und Aufruf ueberschreibt
 das Negative-Flag.
 
 Video- und Scrollregister liegen in `src/video.asm`, Farb- und IRQ-Register
-in `src/gradient.asm`, die Tastaturabfrage in `src/input.asm`. Der Code endet vor
-`$1800`, sonst ueberschreibt die erste Spiegelkopie das Programm. Eine
+in `src/gradient.asm`, die Tastaturabfrage in `src/input.asm`. Der Code unter
+dem BASIC-Stub endet vor `$1800`, sonst ueberschreibt die erste Spiegelkopie
+das Programm. Die Punktanzeige liegt ab `$2000`, noch vor den Vogelmasken. Eine
 falsche Annahme zu TED-Registerbits darf nicht in die Spielmodule
 durchsickern.
 
@@ -177,11 +181,20 @@ Danach bestimmt ein nichtnulliger 8-Bit-LFSR mit Startwert `$5d` die Aenderung
 um -2, -1, +1 oder +2 Zeilen, begrenzt auf den erlaubten Bereich. Der maximale
 Hoehenwechsel betraegt damit 16 Pixel bei 168 Pixeln freiem Lueckenbereich.
 Ein Neustart setzt den Generator zurueck und wiederholt dieselbe Folge.
-Punktwertung und steigende Schwierigkeit folgen separat.
+Jedes geschaffte Rohr gibt genau einen Punkt, geprueft in `swap_buffers` direkt
+nach dem Weltspalten-Inkrement. Die gerade verlassene Spalte unter dem Vogel
+ist `(WORLD_COLUMN + 11) & 63`. Steht dort eine Luecke und in der naechsten
+Ringzelle Himmel, war das die rechte der drei Rohrspalten. Der Zaehler ist
+16 Bit. Angezeigt werden bis zu fuenf Stellen ohne fuehrende Nullen, zentriert
+in den sichtbaren Spalten 1-38 (`start = 1 + (38 - stellen) / 2`). Der Umbruch
+schreibt die Zeile nur bei einer Aenderung neu, in beide Puffer, ohne das
+Spielfeld zu verschieben. Ein Rohr, an dem der Lauf endet, gibt keinen Punkt,
+weil der Kontakt den Scroll vor dem Umbruch stoppt. Neustart setzt auf 0.
+Steigende Schwierigkeit folgt separat.
 
 Kollision prueft die sichtbaren Vogelpixel gegen die festen, am Zeichenraster
-liegenden Rohrkanten sowie die obere und untere Spielfeldkante bei 0 und
-200 Pixeln. Alle drei Rohrstreifen sind vollstaendig solide. Vollstaendig leere Vogelzeichen
+liegenden Rohrkanten sowie die obere Spielfeldkante bei 0 und die Bodenzeile
+ab Pixel 192. Alle drei Rohrstreifen sind vollstaendig solide. Vollstaendig leere Vogelzeichen
 werden weder als Treffer gewertet noch gezeichnet; ihre Bildschirmzeichen
 und Farben bleiben erhalten. Dadurch ist direkter Kontakt ohne Grafikmischung
 moeglich, obwohl der Vogel einen bis zu 32 x 24 Pixel grossen Zeichenblock hat.
@@ -248,10 +261,12 @@ Farbe, naechste IRQ-Adresse und kompletter 9-Bit-Vergleich werden im vorigen
 IRQ vorbereitet. `$FF0A` aktiviert nur den Raster-IRQ samt Vergleichsbit 8.
 
 Die sichtbaren Farbgrenzen liegen im TED-Zaehler bei `$04`, `$21`, `$3E`,
-`$5A`, `$76`, `$91`, `$AF`, `$CC` und `$113`. Die erste Grenze entspricht
+`$5A`, `$76`, `$91`, `$AF`, `$C4` und `$113`. Die erste Grenze entspricht
 PAL-Bildzeile `$34` und der ersten Rohrzeile. Der obere Rahmen behaelt bis
-dorthin Luminanz 0. Der untere farbige Rahmen bleibt ausserhalb des Spielfelds;
-er ist kein Zeichenboden und keine vorgezogene Kollisionsflaeche.
+dorthin Luminanz 0. Ab `$C4`, der ersten Rasterzeile von Zeichenzeile 24,
+tragen Hintergrund und Rahmen die Bodenfarbe. Dieselbe IRQ setzt `$FF07`
+auf Scroll 0, nur fuer diese Zeile. Die Spielschleife schreibt den
+Spiel-Scroll im unteren Rand (`$FC`) zurueck, auch wenn der Lauf steht.
 
 Normale Baender starten den IRQ eine Zeile vorher und synchronisieren ueber
 `$FF1E` auf die horizontale Austastluecke. Die erste Grenze benoetigt einen
@@ -279,6 +294,7 @@ Quelldateien:
 | `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
 | `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
 | `src/render.asm` | Rohrspalten und Spielfeld |
+| `src/score.asm` | Punkt zaehlen, Ziffern zentrieren, beide Puffer schreiben |
 | `src/obstacles.asm` | Reproduzierbare Rohrfolge und Spaltenringpuffer |
 
 ## RAM- und Performance-Budget

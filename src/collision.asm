@@ -109,7 +109,7 @@ collision_column_known:
     sta CELL_INDEX
 collision_row:
     lda ROW_INDEX
-    cmp #SCREEN_ROWS
+    cmp #PLAYFIELD_ROWS
     bcs collision_row_cells
     jsr row_to_pointers
 collision_row_cells:
@@ -120,8 +120,10 @@ collision_cell:
     tax
     lda BIRD_OCCUPIED,x
     beq collision_cell_clear
+    ; Row 24 is the floor even where the score cell is glyph 0. Reading it
+    ; would treat the gaps between digits as sky.
     lda ROW_INDEX
-    cmp #SCREEN_ROWS
+    cmp #PLAYFIELD_ROWS
     bcs bird_collision
     lda (SCREEN_DESTINATION),y
     beq collision_cell_clear

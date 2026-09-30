@@ -5,7 +5,7 @@ render_initial_column:
     inx
     cpx #SCREEN_COLUMNS
     bcc render_initial_column
-    rts
+    jmp render_score
 
 ; Rendering only reads the ring; RNG advances when a new world column is
 ; generated at startup or at the right edge of the hidden buffer.
@@ -72,7 +72,7 @@ store_cell:
     sta (SCREEN_SOURCE),y
     ldy ROW_INDEX
     iny
-    cpy #SCREEN_ROWS
+    cpy #PLAYFIELD_ROWS
     bcc paint_row
     ldx COLUMN_X
     rts

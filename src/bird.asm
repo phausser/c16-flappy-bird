@@ -205,7 +205,7 @@ clear_bird:
     sta CELL_INDEX
 clear_bird_row:
     lda ROW_INDEX
-    cmp #SCREEN_ROWS
+    cmp #PLAYFIELD_ROWS
     bcs clear_next_row
     jsr row_to_pointers
     ldx CELL_INDEX
@@ -245,7 +245,7 @@ publish_bird_glyphs:
     sta CELL_INDEX
 render_bird_row:
     lda ROW_INDEX
-    cmp #SCREEN_ROWS
+    cmp #PLAYFIELD_ROWS
     bcs render_next_row
     jsr row_to_pointers
     ldy #BIRD_SCREEN_COLUMN

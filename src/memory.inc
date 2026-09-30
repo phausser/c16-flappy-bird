@@ -6,11 +6,11 @@
 ; $0100-$01ff  CPU stack
 ; $0800-$0bff  Front color RAM (TED, paired with the screen below)
 ; $0c00-$0fe7  Front screen RAM (the remaining 24 bytes are harmless padding)
-; $1001-$17ff  Program code and static assets
+; $1001-$17ff  Program code. It must end before the hidden buffer.
 ; $1800-$1be7  Back color RAM. The scroll builds the next frame here.
 ; $1c00-$1fe7  Back screen RAM. $FF14 flips to this pair in the border.
-; $2000-$2fff  Free for future game state
-; $3000-$30d1  Game state, candidate glyphs, saved cells, shifted-mask cache
+; $2000-$2fff  Score drawing, then the imported bird masks
+; $3000-$30d7  Game state, candidate glyphs, saved cells, shifted-mask cache, score
 ; $3100-$313f  Gap start per world column, 64-column ring
 ; $3140-$3147  Generator state and renderer scratch
 ; $3148-$33ff  Reserved
@@ -50,6 +50,11 @@ BIRD_CACHE_MASK = GAME_STATE_RAM + $ce
 BIRD_FRAME_INDEX = GAME_STATE_RAM + $d0
 BIRD_ORIGIN_Y = GAME_STATE_RAM + $d1
 BACKGROUND_GRADIENT_INDEX = GAME_STATE_RAM + $d2
+SCORE = GAME_STATE_RAM + $d3
+; SCORE + 1 = $d4. Displayed decimal value, low byte first.
+SCORE_WORK = GAME_STATE_RAM + $d5
+; SCORE_WORK + 1 = $d6. Scratch copy while extracting digits.
+SCORE_PLACES = GAME_STATE_RAM + $d7
 OBSTACLE_BUFFER_RAM = $3100
 PIPE_RANDOM_STATE = $3140
 PIPE_DISTANCE = $3141

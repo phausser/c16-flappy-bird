@@ -235,6 +235,7 @@ swap_buffers:
 
     inc WORLD_COLUMN
     inc COLUMN_UPDATE_COUNTER
+    jsr award_pipe_point
 
     lda VISIBLE_SCREEN_HI
     sta TARGET_SCREEN_HI
@@ -275,18 +276,19 @@ point_row:
     rts
 
 slice_rows:
+; Row 24 is the score. Leave it out of the shift or the digits walk left.
 !set copy_row = 0
-!do while copy_row < SCREEN_ROWS {
+!do while copy_row < PLAYFIELD_ROWS {
     !byte copy_row
     !set copy_row = copy_row + 1
 }
 !set copy_row = 0
-!do while copy_row < SCREEN_ROWS {
+!do while copy_row < PLAYFIELD_ROWS {
     !byte $80 | copy_row
     !set copy_row = copy_row + 1
 }
-; Six unused slots; the final slice copies one row and builds column 39.
-!fill SCROLL_SLICE_COUNT * SCROLL_ROWS_PER_SLICE - SCREEN_ROWS * 2, $ff
+; Eight unused slots. Column 39 is built when the eighth slice finishes.
+!fill SCROLL_SLICE_COUNT * SCROLL_ROWS_PER_SLICE - PLAYFIELD_ROWS * 2, $ff
 
 row_offset_lo:
 !set row_number = 0

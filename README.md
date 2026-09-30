@@ -5,16 +5,19 @@ Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 The playfield uses mixed multicolor/hires TED text mode: 38 visible columns, a 40-byte matrix, and
 one-pixel horizontal scroll. The next frame is built in a hidden text buffer
 and `$FF14` flips to it in the bottom border. Collision uses the visible bird
-pixels and stops at the last free pixel against solid pipes and the upper
-and lower screen edges (0 and 200 pixels). Pipes extend through all 25 rows;
-there is no character-based ground strip or reserved HUD row. Empty bird
+pixels and stops at the last free pixel against solid pipes, the top edge
+(pixel 0) and the floor row (pixel 192). Pipes use rows 0-23. Row 24 is a
+fixed floor in the lower-border color and shows the score, centered, without
+scrolling. Empty bird
 cells leave the environment and its colors untouched.
 The pipes use the exact 24-pixel stripe layout from [assets/pipe.png](assets/pipe.png),
 repeated vertically without end caps. Three multicolor glyphs provide yellow
 highlights (`$77`), green (`$55`) and dark green (`$25`) using the TED palette.
 The bird remains hires; its TED color is set by TED_BIRD_COLOR in src/hardware.inc. The sky uses a blue luminance ramp. The top border is darkest blue, the side
-border ramps evenly to light blue, and the lower border uses color 9 at
-luminance 5. A TED raster IRQ sets these bands; the active screen occupies
+border ramps evenly to light blue, and color 9 at luminance 5 covers the
+floor row plus the lower border, starting at TED line `$C4`. That same IRQ
+sets horizontal scroll to 0 for the score row only; the game loop restores
+the playfield scroll at line `$FC`. The active screen occupies
 TED raster-counter lines `$04` through `$CB`. The handler owns the hardware
 IRQ with ROM banked out and returns directly with `RTI`. It prepares each
 color in advance, normally enters one line before the boundary, and uses `$FF1E` to
@@ -23,8 +26,9 @@ exactly with character row 0 at TED line `$04` (PAL picture line `$34`):
 its separate handler enters two lines early and writes after the line-3
 character fetch. Other band edges avoid fetch pairs. This timing targets
 PAL with vertical scroll 3.
-Release and press Space again to restart. Scoring and a game-over overlay
-are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
+Each pipe passed scores one point. The pipe that ends the run does not.
+Release and press Space again to restart from 0. Best score and a title
+screen are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 
 Play it in the browser: https://phausser.github.io/c16-flappy-bird/
 
@@ -65,16 +69,17 @@ Pipes have a 72-pixel gap and a 96-pixel start-to-start spacing. Gap starts
 vary between rows 4 and 10, changing by at most 16 pixels per pipe. The first
 pipe keeps the familiar centered gap. Restart resets the fixed seed (`$5d`);
 change `PIPE_RANDOM_SEED` in `src/constants.inc` to test another sequence.
-`python tests/obstacles.py` verifies the multicolor stripe pattern and mode,
+`python tests/score.py` checks one point per pipe, the fixed floor row and
+digit placement. `python tests/obstacles.py` verifies the multicolor stripe pattern and mode,
 generation, restarts, screen/color copies,
 ring/counter wraparound and an automated flight through changing gaps.
 
 ## Current validation and remaining work
 
 The full-height playfield passed 1,024 buffer flips, 3,000 automated gameplay
-frames, 79,872 pixel collision cases and 3,424 render/restore cases. All four
-poses currently covered by the collision oracle stop at the actual lower
-screen edge. The multicolor raster build passed 3,874 color-store checks in
+frames, 79,872 pixel collision cases and 3,064 render/restore cases. All four
+poses currently covered by the collision oracle stop at pixel 191, on the
+score row. The multicolor raster build passed 3,874 color-store checks in
 VICE, plus IRQ register, stack, vector, 9-bit compare and restart checks.
 
 `tests/collision.py` still stops at its existing animation-cadence assertion:

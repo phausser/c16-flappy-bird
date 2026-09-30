@@ -69,10 +69,10 @@ def oracle(name, bird_y, world, phase, pending):
     for x, y in PIXELS[name]:
         py = bird_y + y
         col = 12 + (7 - next_phase + x) // 8
-        if py < 0 or py >= 200:
+        if py < 0 or py >= 192:
             return True
         gap = WORLD_GAPS[next_world + col]
-        if gap and (0 <= py < gap * 8 or (gap + 9) * 8 <= py < 200):
+        if gap and (0 <= py < gap * 8 or (gap + 9) * 8 <= py < 192):
             return True
     return False
 
@@ -159,10 +159,10 @@ for world in (0, 12, 36, 60):
                 render_count += 1
 print(f'{render_count} render/restore cases passed', flush=True)
 
-# The removed ground rows are flyable; only the actual 200-pixel edge
-# stops a fall. Test every pose and fine-scroll phase against its last pixel.
+# The score row is solid. Ink stops on pixel 191; pixel 192 is the floor.
+# Test every pose and fine-scroll phase against its last free pixel.
 for name in MASKS:
-    last_safe_y = 199 - max(y for _, y in PIXELS[name])
+    last_safe_y = 191 - max(y for _, y in PIXELS[name])
     for phase in range(8):
         scene(0, phase)
         call('clear_bird')
@@ -180,7 +180,7 @@ for name in MASKS:
         assert get('BIRD_Y_POSITION') == last_safe_y
         assert not oracle(name, last_safe_y, 0, phase, 0)
         assert oracle(name, last_safe_y + 1, 0, phase, 0)
-print('All poses stop at the 200-pixel screen edge; former ground is flyable', flush=True)
+print('All poses stop at pixel 191; the score row is solid', flush=True)
 
 # Exact GIF cadence: initialization displays frame 0; each pose lasts five
 # PAL frames, including wraparound. Falling must not replace the supplied art.
@@ -225,7 +225,7 @@ def position(y, velocity, name):
 max_cycles = 0
 # Fast downward and upward movement stops partway through the proposed step.
 for world, start, velocity, expected, name in (
-    (0, 185, 3, 187, 'BIRD_MASK_0'),
+    (0, 177, 3, 179, 'BIRD_MASK_0'),
     (12, 113, 3, 114, 'BIRD_MASK_0'),
     (12, 56, -2, 55, 'BIRD_MASK_0'),
     (0, 0, -2, -1, 'BIRD_MASK_0'),

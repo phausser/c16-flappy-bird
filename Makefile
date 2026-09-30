@@ -12,7 +12,7 @@ endif
 BUILD_DIR := build
 PRG := $(BUILD_DIR)/flappy.prg
 SYMBOLS := $(BUILD_DIR)/flappy.sym
-SOURCE := src/gradient.asm src/obstacles.asm src/bird_masks.inc src/collision.asm src/main.asm src/video.asm src/render.asm src/bird.asm src/input.asm src/hardware.inc src/memory.inc src/constants.inc
+SOURCE := src/gradient.asm src/obstacles.asm src/bird_masks.inc src/collision.asm src/main.asm src/video.asm src/render.asm src/score.asm src/bird.asm src/input.asm src/hardware.inc src/memory.inc src/constants.inc
 
 .PHONY: all run lint clean
 

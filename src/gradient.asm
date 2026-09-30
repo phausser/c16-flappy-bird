@@ -82,9 +82,16 @@ gradient_next_ready:
     stx BACKGROUND_GRADIENT_INDEX
     cpx #0
     beq gradient_arm_top
+    cpx #BACKGROUND_GRADIENT_LEVELS
+    beq gradient_arm_floor
     lda #<background_gradient_irq
     sta HARDWARE_IRQ_VECTOR
     lda #>background_gradient_irq
+    bne gradient_arm_vector
+gradient_arm_floor:
+    lda #<background_gradient_floor_irq
+    sta HARDWARE_IRQ_VECTOR
+    lda #>background_gradient_floor_irq
     bne gradient_arm_vector
 gradient_arm_top:
     lda #<background_gradient_top_irq
@@ -103,6 +110,34 @@ gradient_arm_vector:
     pla
     rti
 
+; Character row 24 is fetched on the line before it is displayed. Enter two
+; lines early, wait out that fetch, then set the floor color and scroll 0
+; in the same blank. No other band writes $FF07, so their color stores stay
+; on the short path. The main loop puts the playfield scroll back at $FC.
+background_gradient_floor_irq:
+    pha
+    lda TED_IRQ_STATUS
+    sta TED_IRQ_STATUS
+    txa
+    pha
+    ldx #FRAME_BOTTOM_COLOR
+gradient_floor_wrap:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$b0
+    bcc gradient_floor_wrap
+gradient_floor_fetch:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$bc
+    bcs gradient_floor_fetch
+gradient_floor_border_store:
+    stx TED_BORDER_COLOR
+gradient_floor_background_store:
+    stx TED_COLOR_BG
+    lda #TED_CONTROL2_TEXT_38_COLS
+gradient_floor_scroll_store:
+    sta TED_CONTROL2
+    jmp gradient_schedule_next
+
 ; Seven active bands, then lower and upper border. Each event supplies the
 ; entire 9-bit compare and enables only raster IRQs (bit 1).
 ; Band edges are shifted at most two lines to avoid the fetch pairs.
@@ -112,8 +147,8 @@ background_gradient_colors:
     !byte FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
 background_gradient_rasters:
     !byte BACKGROUND_GRADIENT_FIRST_RASTER - 2, $20, $3d, $59, $75, $90, $ae
-    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 1), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
+    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 2), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
 background_gradient_high:
     !fill BACKGROUND_GRADIENT_LEVELS, 2
-    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 1) >> 8)
+    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 2) >> 8)
     !byte 2 | ((BACKGROUND_GRADIENT_TOP_RASTER - 1) >> 8)
