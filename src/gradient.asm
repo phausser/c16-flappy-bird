@@ -58,21 +58,15 @@ background_gradient_top_irq:
     txa
     pha
     ldx #$1d
-gradient_top_visible:
-    lda TED_RASTER_HORIZONTAL
-    cmp #$9c
-    bcs gradient_top_visible
-gradient_top_blank:
-    lda TED_RASTER_HORIZONTAL
-    cmp #$9c
-    bcc gradient_top_blank
+; Use separate thresholds: enter the blank at $B0, accept the post-fetch
+; sample below $BC. Reusing $B0 can miss a late read and skip a whole line.
 gradient_top_wrap:
     lda TED_RASTER_HORIZONTAL
     cmp #$b0
     bcc gradient_top_wrap
 gradient_top_fetch:
     lda TED_RASTER_HORIZONTAL
-    cmp #$b0
+    cmp #$bc
     bcs gradient_top_fetch
 gradient_top_border_store:
     stx TED_BORDER_COLOR

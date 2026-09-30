@@ -94,7 +94,9 @@ vergeben.
 
 ## Meilenstein 4 -- Feinschliff und Stabilitaet
 
-- [ ] Farben, Rohrkappen und Vogelposen fuer klare Lesbarkeit
+- [x] Dreifarbige Multicolor-Rohre nach `assets/pipe.png`, vorerst ohne
+  Abschlusskappen; Hires-Vogel und Rasterhimmel beibehalten.
+- [ ] Farben und Vogelposen fuer klare Lesbarkeit
   abstimmen.
 - [ ] Schwierigkeit langsam an Punktzahl koppeln, ohne unmoegliche
   Rohrfolgen zu erzeugen.
@@ -117,7 +119,7 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 - [x] Untere Bildschirmkante bei 200 Pixeln fuer die vier bisher getesteten
   Posen und alle acht Scrollphasen verifiziert.
 - [x] IRQ-Register, Stack, Vektorwechsel, Neustart und 9-Bit-Rasterfolge geprueft.
-- [x] 3.928 Farbzugriffe mit buendiger Oberkante in VICE im erlaubten Zeitfenster.
+- [x] 3.874 Farbzugriffe der Multicolor-Fassung mit buendiger Oberkante in VICE im erlaubten Zeitfenster.
 - [ ] `tests/collision.py` auf sechs statt vier GIF-Frames erweitern; die
   bestehende Kadenz-Assertion bricht derzeit ab. Danach auch die dahinter
   liegenden Kontakt-, Freeze- und Neustarttests vollstaendig ausfuehren.

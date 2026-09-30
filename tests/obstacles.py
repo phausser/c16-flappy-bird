@@ -63,7 +63,7 @@ print('4096 columns match the model on both restarts; all 7 heights reached', fl
 def expected_cell(world, row, col):
     gap = columns[world + col]
     if gap and (row < gap or row >= gap + 9):
-        glyph = S['GLYPH_PIPE_CAP'] if row in (gap - 1, gap + 9) else S['GLYPH_PIPE_BODY']
+        glyph = S['GLYPH_PIPE_LEFT'] + (world + col - 24) % 24
         return glyph, S['TED_PIPE_COLOR']
     return S['GLYPH_SKY'], S['TED_SKY_COLOR']
 
@@ -82,6 +82,18 @@ def check_buffer(world, screen, color, bird=False):
 
 cpu.memory[S['commit_video_ptr']] = 0x60
 call('initialise_video')
+assert get('TED_CONTROL2') & 0x10
+assert get('TED_COLOR_MC1') == S['TED_PIPE_HIGHLIGHT']
+assert get('TED_COLOR_MC2') == S['TED_PIPE_SHADOW']
+assert S['TED_PIPE_COLOR'] & 8 and not S['TED_BIRD_COLOR'] & 8
+# Reference's twelve doubled pixels, with no sky pixels or end-cap rows.
+expected_pairs = [3, 1, 3, 1, 1, 3, 3, 3, 2, 3, 2, 2]
+for y in range(8):
+    actual_pairs = []
+    for glyph in (1, 2, 3):
+        row = cpu.memory[S['CHARSET_RAM'] + glyph * 8 + y]
+        actual_pairs.extend((row >> shift) & 3 for shift in (6, 4, 2, 0))
+    assert actual_pairs == expected_pairs
 call('initialise_obstacles')
 call('render_playfield')
 call('mirror_playfield_to_back')

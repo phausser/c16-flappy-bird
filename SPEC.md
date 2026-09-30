@@ -50,14 +50,31 @@ Die Spielansicht verwendet den TED-Textmodus mit einem eigenen Zeichensatz.
 Die Matrix ist 40 x 25 Zeichen zu 8 x 8 Pixeln. Der TED zeigt 38 Spalten
 (`$FF07` Bit 3 geloescht), damit der Rand die angeschnittene Scroll-Zelle
 verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Das Spielfeld nutzt alle 25 Reihen ohne Boden- oder HUD-Streifen.
-Rohre reichen oben und unten bis an den Rand der Zeichenmatrix. Die Rohre bestehen aus wiederverwendbaren Kappen-, Koerper- und
-Randzeichen. Das spart RAM und erlaubt unterschiedliche Hoehen allein durch
+Rohre reichen oben und unten bis an den Rand der Zeichenmatrix. Die Rohre bestehen aus drei wiederverwendbaren Multicolor-Zeichen
+fuer linken Streifen, Mitte und rechten Streifen, vorerst ohne Abschluss. Das spart RAM und erlaubt unterschiedliche Hoehen allein durch
 Umfuellen der Screen-Map.
 
 Die genaue Lage von Screen-RAM, Color-RAM und Zeichensatz wird als symbolische
 Memory-Map in `src/memory.inc` definiert. Vor der Implementierung wird sie
 gegen die aktive TED-Speicherbank und die von ACME erzeugte PRG-Adresse
 geprueft; keinerlei magische Adressen in der Spiellogik.
+
+### Dreifarbige Rohre
+
+`assets/pipe.png` ist die 24 x 24 Pixel grosse Referenz. Jede ihrer Zeilen
+enthaelt dieselben zwoelf Doppelpixel. Die drei Rohrglyphen 1-3 wiederholen
+die Bytes `$DD`, `$7F` und `$BA` jeweils achtmal. Von links nach rechts lautet
+die Farbfolge: Gruen, Gelb, Gruen, Gelb / Gelb, Gruen, Gruen, Gruen /
+Dunkelgruen, Gruen, Dunkelgruen, Dunkelgruen. Oben und unten bleiben die
+Rohrenden gerade; separate Kappen gibt es derzeit nicht.
+
+`$FF07` Bit 4 aktiviert gemischten Multicolor-Text. Nur Rohrzellen tragen
+Color-RAM-Bit 3 (`$5D`): Pixelpaar 01 nutzt `$FF16 = $77` (Gelb), 10 nutzt
+`$FF17 = $25` (Dunkelgruen), 11 nutzt die Zellfarbe `$55` (Gruen).
+Kein Rohrpixel nutzt 00, sodass der Rasterhimmel die Rohre nicht umfaerbt.
+Vogelzellen behalten Attribut `$00` und damit Hires-Aufloesung. Der Renderer
+bestimmt den Rohrstreifen aus den vorherigen Ringpuffer-Spalten; das
+Lueckenformat und die volle 24-Pixel-Kollisionsbreite bleiben erhalten.
 
 ### Pixelweiches horizontales Scrolling
 
@@ -163,7 +180,7 @@ Punktwertung und steigende Schwierigkeit folgen separat.
 
 Kollision prueft die sichtbaren Vogelpixel gegen die festen, am Zeichenraster
 liegenden Rohrkanten sowie die obere und untere Spielfeldkante bei 0 und
-200 Pixeln. Dekorative Loecher in Rohrkappen gehoeren zur festen Flaeche. Vollstaendig leere Vogelzeichen
+200 Pixeln. Alle drei Rohrstreifen sind vollstaendig solide. Vollstaendig leere Vogelzeichen
 werden weder als Treffer gewertet noch gezeichnet; ihre Bildschirmzeichen
 und Farben bleiben erhalten. Dadurch ist direkter Kontakt ohne Grafikmischung
 moeglich, obwohl der Vogel einen bis zu 32 x 24 Pixel grossen Zeichenblock hat.
@@ -239,7 +256,9 @@ Normale Baender starten den IRQ eine Zeile vorher und synchronisieren ueber
 `$FF1E` auf die horizontale Austastluecke. Die erste Grenze benoetigt einen
 eigenen Handler: IRQ auf TED-Zeile `$02`, Warten ueber deren rechten Rand,
 dann Farbzugriffe nach dem Zeichenfetch in Zeile `$03`. So liegen beide
-Schreibzugriffe vor dem sichtbaren Beginn von Zeile `$04`. Die uebrigen
+Schreibzugriffe vor dem sichtbaren Beginn von Zeile `$04`. Getrennte
+horizontale Schwellwerte (`$B0` beim Eintritt, `$BC` nach dem Fetch)
+verhindern, dass ein spaeter Lesezyklus eine ganze Zeile ueberspringt. Die uebrigen
 Bandgrenzen vermeiden Zeichenfetch-Paare. Voraussetzung ist PAL mit
 Vertikalscroll 3 und normaler TED-Taktumschaltung. Kein Warten auf `$FF1D`
 im IRQ; die Spielschleife bleibt ausserhalb des Handlers.
@@ -304,7 +323,7 @@ Build und Lint bestehen. Der Stand ohne Zeichenboden bestand 1.024
 Pufferwechsel, 3.000 automatische Spielframes, 79.872 Pixelkollisions- und
 3.424 Render-/Restore-Faelle. Der neue untere Rand wurde fuer alle vier
 bisher im Kollisionsorakel enthaltenen Posen und acht Scrollphasen geprueft.
-Die buendige Oberkante bestand den IRQ-Regressionstest und 3.928 gemessene
+Die Multicolor-Fassung bestand den IRQ-Regressionstest und 3.874 gemessene
 Farbzugriffe in VICE ohne Verletzung der sichtbaren Zeitfenster.
 
 Der bestehende Animationstest nimmt vier statt der sechs importierten

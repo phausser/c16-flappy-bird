@@ -75,11 +75,14 @@ draw_accepted_bird:
 
 * = CHARSET_RAM
 !fill 8, 0
-; Glyphs 1-2 form the pipes; glyph 3 is reserved. Glyphs 4-15 are the dynamic bird area
+; Glyphs 1-3 form the left/middle/right pipe strips from assets/pipe.png.
+; Glyphs 4-15 are the dynamic hires bird area
 ; (four columns, each with three rows). Only accepted candidate
 ; glyphs are copied here; collision probes never modify the live charset.
-!byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
-!byte $7e, $ff, $ff, $ff, $ff, $ff, $ff, $7e
-!fill 8, 0
+; Two-bit pixels: green/yellow/green/yellow, yellow/green/green/green,
+; dark/green/dark/dark. Repeat vertically without end caps.
+!fill 8, %11011101
+!fill 8, %01111111
+!fill 8, %10111010
 !fill BIRD_GLYPH_BYTES, 0
 !fill CHARSET_SIZE - 32 - BIRD_GLYPH_BYTES, 0

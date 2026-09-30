@@ -2,14 +2,17 @@
 
 Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 
-The playfield is TED text mode: 38 visible columns, a 40-byte matrix, and
+The playfield uses mixed multicolor/hires TED text mode: 38 visible columns, a 40-byte matrix, and
 one-pixel horizontal scroll. The next frame is built in a hidden text buffer
 and `$FF14` flips to it in the bottom border. Collision uses the visible bird
 pixels and stops at the last free pixel against solid pipes and the upper
 and lower screen edges (0 and 200 pixels). Pipes extend through all 25 rows;
 there is no character-based ground strip or reserved HUD row. Empty bird
 cells leave the environment and its colors untouched.
-The sky uses a blue luminance ramp. The top border is darkest blue, the side
+The pipes use the exact 24-pixel stripe layout from [assets/pipe.png](assets/pipe.png),
+repeated vertically without end caps. Three multicolor glyphs provide yellow
+highlights (`$77`), green (`$55`) and dark green (`$25`) using the TED palette.
+The black bird remains hires. The sky uses a blue luminance ramp. The top border is darkest blue, the side
 border ramps evenly to light blue, and the lower border uses color 9 at
 luminance 5. A TED raster IRQ sets these bands; the active screen occupies
 TED raster-counter lines `$04` through `$CB`. The handler owns the hardware
@@ -62,7 +65,8 @@ Pipes have a 72-pixel gap and a 192-pixel start-to-start spacing. Gap starts
 vary between rows 4 and 10, changing by at most 16 pixels per pipe. The first
 pipe keeps the familiar centered gap. Restart resets the fixed seed (`$5d`);
 change `PIPE_RANDOM_SEED` in `src/constants.inc` to test another sequence.
-`python tests/obstacles.py` verifies generation, restarts, screen/color copies,
+`python tests/obstacles.py` verifies the multicolor stripe pattern and mode,
+generation, restarts, screen/color copies,
 ring/counter wraparound and an automated flight through changing gaps.
 
 ## Current validation and remaining work
@@ -70,7 +74,7 @@ ring/counter wraparound and an automated flight through changing gaps.
 The full-height playfield passed 1,024 buffer flips, 3,000 automated gameplay
 frames, 79,872 pixel collision cases and 3,424 render/restore cases. All four
 poses currently covered by the collision oracle stop at the actual lower
-screen edge. The aligned raster build passed 3,928 color-store checks in
+screen edge. The multicolor raster build passed 3,874 color-store checks in
 VICE, plus IRQ register, stack, vector, 9-bit compare and restart checks.
 
 `tests/collision.py` still stops at its existing animation-cadence assertion:

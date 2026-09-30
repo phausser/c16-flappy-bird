@@ -1,4 +1,8 @@
 initialise_video:
+    lda #TED_PIPE_HIGHLIGHT
+    sta TED_COLOR_MC1
+    lda #TED_PIPE_SHADOW
+    sta TED_COLOR_MC2
     lda #TED_CONTROL1_TEXT_25_ROWS
     sta TED_CONTROL1
     lda #TED_CONTROL2_TEXT_38_COLS

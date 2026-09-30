@@ -21,10 +21,27 @@ render_world_column:
     clc
     adc #PIPE_GAP_HEIGHT
     sta PIPE_RENDER_GAP_END
-    lda PIPE_HERE
+    ; Neighbour descriptors identify the three columns even across ring
+    ; wrap. Keep the ring's gap-only format for generation and collision.
+    ldx #GLYPH_PIPE_LEFT
+    tya
     sec
     sbc #1
-    sta PIPE_RENDER_TOP_CAP
+    and #PIPE_RING_MASK
+    tay
+    lda OBSTACLE_BUFFER_RAM,y
+    beq pipe_glyph_ready
+    inx
+    tya
+    sec
+    sbc #1
+    and #PIPE_RING_MASK
+    tay
+    lda OBSTACLE_BUFFER_RAM,y
+    beq pipe_glyph_ready
+    inx
+pipe_glyph_ready:
+    stx PIPE_RENDER_GLYPH
     ldy #0
 paint_row:
     sty ROW_INDEX
@@ -35,20 +52,11 @@ paint_row:
     lda PIPE_HERE
     beq store_cell
     cpy PIPE_HERE
-    bcc top_pipe_cell
+    bcc pipe_body_cell
     cpy PIPE_RENDER_GAP_END
     bcc store_cell
-    beq pipe_cap_cell
-    bne pipe_body_cell
-top_pipe_cell:
-    cpy PIPE_RENDER_TOP_CAP
-    beq pipe_cap_cell
 pipe_body_cell:
-    lda #GLYPH_PIPE_BODY
-    bne set_pipe_cell
-pipe_cap_cell:
-    lda #GLYPH_PIPE_CAP
-set_pipe_cell:
+    lda PIPE_RENDER_GLYPH
     sta CELL_GLYPH
     lda #TED_PIPE_COLOR
     sta CELL_COLOR

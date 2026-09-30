@@ -33,8 +33,9 @@ PIPE_GAP_MAX_STEP = 2
 SCROLL_ROWS_PER_SLICE = 7
 
 GLYPH_SKY = 0
-GLYPH_PIPE_BODY = 1
-GLYPH_PIPE_CAP = 2
+GLYPH_PIPE_LEFT = 1
+GLYPH_PIPE_MIDDLE = 2
+GLYPH_PIPE_RIGHT = 3
 
 ; A 20x14 mask plus seven fine-scroll pixels needs four columns, three rows.
 BIRD_HEIGHT = 14
