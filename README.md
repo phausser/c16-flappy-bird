@@ -10,7 +10,11 @@ edges. Empty bird cells leave the environment and its colors untouched.
 The sky uses a blue luminance ramp. The top border is darkest blue, the side
 border ramps evenly to light blue, and the lower border uses color 9 at
 luminance 5. A TED raster IRQ sets these bands; the active screen occupies
-TED raster-counter lines `$04` through `$CB`.
+TED raster-counter lines `$04` through `$CB`. The handler owns the hardware
+IRQ with ROM banked out and returns directly with `RTI`. It prepares each
+color in advance, enters one line before the boundary, and uses `$FF1E` to
+place both color writes in the horizontal blank. Band edges avoid TED
+character-fetch pairs; this timing targets PAL with vertical scroll 3.
 Release and press Space again to restart. Scoring and a game-over overlay
 are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 
@@ -34,7 +38,12 @@ reaches the emulator.
 
 Collision regression tests execute the assembled code with py65 (install it
 in a Python virtual environment): `python tests/collision.py` after `make`.
-These cover every pose and scroll phase, pixel contact, empty-cell rendering,
+`python tests/gradient.py` checks IRQ register/stack preservation, restart,
+and the full 9-bit raster sequence. Optionally pass a VICE monitor log
+(recorded with `trace store ff19` and `trace store ff15`) to check the
+actual color writes against the horizontal blank windows over 100+ frames.
+
+The collision tests cover every pose and scroll phase, pixel contact, empty-cell rendering,
 animation near edges, freeze and restart. The tests emulate the CPU; use VICE
 for TED raster timing and visual checks.
 

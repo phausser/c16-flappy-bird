@@ -15,7 +15,8 @@
 ; $3140-$3147  Generator state and renderer scratch
 ; $3148-$33ff  Reserved
 ; $3400-$3bff  RAM-resident 256-glyph character set
-; $3c00-$3fff  1 KiB safety reserve
+; $3c00-$3ffd  Safety reserve
+; $3ffe-$3fff  Hardware IRQ vector (16 KiB mirror of $fffe-$ffff)
 
 SCREEN_RAM = $0c00
 COLOR_RAM = $0800
@@ -112,5 +113,3 @@ BIRD_SHIFT_RIGHT = $3d
 BIRD_SHIFT_TAIL = $3e
 BIRD_SHIFT_COUNT = $3f
 BIRD_SHIFT_EXTRA = $19
-KERNAL_IRQ_VECTOR = $0314
-KERNAL_IRQ_EXIT = $fcbe

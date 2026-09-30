@@ -9,7 +9,8 @@ SCROLL_SLICE_COUNT = 8
 ; The scroll register and the buffer flip are stored here.
 RASTER_BORDER = $fc
 ; TED raster-counter coordinates: active 25-row screen is $04..$CB.
-BACKGROUND_GRADIENT_FIRST_RASTER = $04
+; Start in the upper border, before the first character-fetch pair.
+BACKGROUND_GRADIENT_FIRST_RASTER = $02
 ; Low nibble is TED color 13 (blue); bits 4-6 set luminance 0..7.
 BG_GRADIENT_HUE = $0d
 BG_GRADIENT_START_COLOR = BG_GRADIENT_HUE

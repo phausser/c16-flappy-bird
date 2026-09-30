@@ -14,12 +14,13 @@ basic_end:
 * = CODE_START
 
 ; IRQ stays masked during setup. The raster gradient later installs its
-; handler through the KERNAL IRQ vector; that handler touches only TED color
+; handler through the hardware IRQ vector; that handler touches only TED color
 ; and compare registers plus its dedicated gradient state.
 start:
     sei
     jsr initialise_input
 restart_round:
+    sei
     lda #0
     sta GAME_OVER
     jsr initialise_video

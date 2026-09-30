@@ -1,77 +1,84 @@
-; Change background and border together at identical raster positions. The
-; lower and top borders each get their own event. The KERNAL dispatcher calls
-; this through $0314 after acknowledging the TED IRQ.
+; Own the hardware IRQ, including its register save/restore. On a 16 KiB
+; C16, the RAM IRQ vector at $FFFE mirrors $3FFE in the safety reserve.
 initialise_background_gradient:
     sei
     lda #<background_gradient_irq
-    sta KERNAL_IRQ_VECTOR
+    sta HARDWARE_IRQ_VECTOR
     lda #>background_gradient_irq
-    sta KERNAL_IRQ_VECTOR + 1
+    sta HARDWARE_IRQ_VECTOR + 1
+    sta TED_RAM_ENABLE
     lda #0
     sta BACKGROUND_GRADIENT_INDEX
-    lda #BACKGROUND_GRADIENT_FIRST_RASTER
+    lda #$1d
+    sta gradient_color + 1
+    lda #BACKGROUND_GRADIENT_FIRST_RASTER - 1
     sta TED_RASTER_COMPARE
     lda #BG_GRADIENT_START_COLOR
     sta TED_COLOR_BG
     sta TED_BORDER_COLOR
-    ; $FF0A bit 1 enables raster IRQs; bit 0 is raster-compare bit 8.
-    lda #2
+    lda TED_IRQ_STATUS
     sta TED_IRQ_STATUS
+    lda #2
     sta TED_IRQ_ENABLE
     cli
     rts
 
-; Called after the KERNAL has saved A/X/Y. Use its epilogue to restore the
-; caller's registers and hardware frame; a direct RTI would leak stack bytes.
+; Prepare the immediate color in the previous IRQ: no table indexing
+; or subroutine calls select the color before the two stores.
+; X is saved only afterwards; Y is untouched. Never enter the KERNAL dispatcher or its exit routine.
 background_gradient_irq:
-    lda #2
+    pha
+    lda TED_IRQ_STATUS
     sta TED_IRQ_STATUS
+; Enter one line ahead and wait for the right-hand horizontal blank.
+; $FF1E exposes the horizontal counter; $A0 is just before the blank.
+; The compare/branch/load delay puts the border store beyond the canvas,
+; and the background store still precedes the next character window.
+; Both sides of each boundary avoid character-fetch lines (low bits 3/4).
+; Otherwise a bus steal between the two stores can expose a partial line.
+gradient_wait_visible:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$a0
+    bcs gradient_wait_visible
+gradient_wait_blank:
+    lda TED_RASTER_HORIZONTAL
+    cmp #$a0
+    bcc gradient_wait_blank
+gradient_color:
+    lda #$1d
+    sta TED_BORDER_COLOR
+    sta TED_COLOR_BG
+    txa
+    pha
     ldx BACKGROUND_GRADIENT_INDEX
-    cpx #BACKGROUND_GRADIENT_LEVELS
-    bcc set_gradient_level
-    beq set_bottom_border
-set_top_border:
-    lda #BG_GRADIENT_START_COLOR
-    sta TED_COLOR_BG
-    sta TED_BORDER_COLOR
-    lda #0
-    sta BACKGROUND_GRADIENT_INDEX
-    lda #BACKGROUND_GRADIENT_FIRST_RASTER
-    sta TED_RASTER_COMPARE
-    lda #2
-    sta TED_IRQ_ENABLE
-    jmp restore_gradient_irq
-set_bottom_border:
-    lda #FRAME_BOTTOM_COLOR
-    sta TED_COLOR_BG
-    sta TED_BORDER_COLOR
-    lda #(BACKGROUND_GRADIENT_LEVELS + 1)
-    sta BACKGROUND_GRADIENT_INDEX
-    lda #<BACKGROUND_GRADIENT_TOP_RASTER
-    sta TED_RASTER_COMPARE
-    ; The visible PAL canvas starts at counter $113, so compare bit 8 is set.
-    lda #3
-    sta TED_IRQ_ENABLE
-    jmp restore_gradient_irq
-set_gradient_level:
-    lda background_gradient_colors,x
-    sta TED_COLOR_BG
-    sta TED_BORDER_COLOR
     inx
+    cpx #BACKGROUND_GRADIENT_LEVELS + 2
+    bcc gradient_next_ready
+    ldx #0
+gradient_next_ready:
     stx BACKGROUND_GRADIENT_INDEX
-    dex
+    lda background_gradient_colors,x
+    sta gradient_color + 1
     lda background_gradient_rasters,x
     sta TED_RASTER_COMPARE
-restore_gradient_irq:
-    jmp KERNAL_IRQ_EXIT
+    lda background_gradient_high,x
+    sta TED_IRQ_ENABLE
+    pla
+    tax
+    pla
+    rti
 
-; Seven equally sized bands cover the active display, with luminance 1 at the
-; first screen line and luminance 7 through the last line. Both TED color
-; registers receive each entry on the same raster event.
+; Seven active bands, then lower and upper border. Each event supplies the
+; entire 9-bit compare and enables only raster IRQs (bit 1).
+; Band edges are shifted at most two lines to avoid the fetch pairs.
+; Horizontal timing assumes PAL, vertical scroll 3 and normal TED speed.
 background_gradient_colors:
     !byte $1d, $2d, $3d, $4d, $5d, $6d, $7d
-
-; TED raster-counter coordinates: active display $04..$CB, lower border
-; starts at $CC. Seven bands split 200 lines into 28/29-line intervals.
+    !byte FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
 background_gradient_rasters:
-    !byte $21, $3d, $5a, $76, $93, $af, BACKGROUND_GRADIENT_BOTTOM_RASTER
+    !byte BACKGROUND_GRADIENT_FIRST_RASTER - 1, $20, $3d, $59, $75, $90, $ae
+    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 1), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
+background_gradient_high:
+    !fill BACKGROUND_GRADIENT_LEVELS, 2
+    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 1) >> 8)
+    !byte 2 | ((BACKGROUND_GRADIENT_TOP_RASTER - 1) >> 8)

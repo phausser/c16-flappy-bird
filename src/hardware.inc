@@ -16,6 +16,9 @@ TED_RASTER_COMPARE = $ff0b
 TED_COLOR_BG = $ff15
 TED_BORDER_COLOR = $ff19
 TED_RASTER_LO = $ff1d
+TED_RASTER_HORIZONTAL = $ff1e
+TED_RAM_ENABLE = $ff3f
+HARDWARE_IRQ_VECTOR = $fffe
 
 ; Bits 0-2 = vertical scroll 3. Scroll 0 shifts the matrix up and opens
 ; three scanlines under the ground; the TED paints the bytes past the
