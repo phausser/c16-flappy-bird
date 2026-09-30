@@ -21,8 +21,8 @@ kein Ziel des ersten Meilensteins.
 - Eine Beruehrung eines Rohrs, des Bodens oder der Decke beendet den Lauf.
   Der Bildschirm bleibt kurz stehen, zeigt Punktzahl und Bestwert und startet
   erst nach einer expliziten Eingabe neu.
-- Der Vogel hat mindestens drei Flugphasen (Fluegel hoch, mitte, runter);
-  beim Fallen kippt bzw. veraendert er sichtbar seine Haltung.
+- Der Vogel verwendet vier Animationsbilder aus der gelieferten GIF;
+  die Fluegelbewegung laeuft auch beim Fallen weiter.
 
 ## Zielplattform und Werkzeugkette
 
@@ -97,27 +97,27 @@ Horizontalscroll wird daraus abgeleitet.
 
 ### Vogel und vertikale Pixelbewegung
 
-Der Vogel ist ein 16 x 16 Pixel grosses Objekt und steht horizontal fest.
+Der Vogel ist ein 20 x 14 Pixel grosses Objekt und steht horizontal fest.
 Seine physikalische Y-Position und Geschwindigkeit liegen in 8.8-Fixpunkt
-vor. Fuer das Rendering enthaelt der Zeichensatz neun dynamische Vogelzeichen,
-drei Spalten mal drei Zeilen.
+vor. Fuer das Rendering enthaelt der Zeichensatz zwoelf dynamische Vogelzeichen,
+vier Spalten mal drei Zeilen.
 
 1. Die ganzzahlige Y-Position bestimmt die Bildschirmzeile.
 2. Die unteren drei Bits bestimmen den vertikalen Pixelversatz.
 3. Der Feinscroll schiebt jede Zelle mit. Damit der Vogel auf dem Schirm
    stehen bleibt, wird die Maske um `7 - Scroll` Pixel nach rechts in den
    Glyphen verschoben. Bei Scroll 7 faellt der Versatz auf 0 und die Maske
-   belegt genau zwei Spalten. Ab einem Pixel Versatz kommt die dritte
-   Spalte dazu. Eine leere dritte Spalte wird nicht auf den Schirm gelegt.
-4. Aus dem 16 x 16-Frame wird so ein bis zu 24 x 24 Pixel grosser Block.
+   belegt bis zu drei Spalten. Ab fuenf Pixeln Versatz kommt die vierte
+   Spalte dazu. Vollstaendig leere Zellen werden nicht gezeichnet.
+4. Aus dem 20 x 14-Frame wird so ein bis zu 32 x 24 Pixel grosser Block.
    Leere Bits zeigen die Hintergrundfarbe; eine Zelle hat nur eine
    Vordergrundfarbe.
 
 Die Kollision beruecksichtigt nur nichtleere Vogelzeichen. Der Vogel bewegt
 sich vertikal ohne Acht-Pixel-Spruenge und horizontal ohne den Sieben-Pixel-
-Ruck des Feinscrolls. Die Fluegelanimation wechselt zeitbasiert zwischen drei
-Quellmasken; Fallgeschwindigkeit waehlt zusaetzlich eine aufgerichtete oder
-abwaerts gerichtete Pose. Das Kopieren bleibt auf den kleinen dynamischen
+Ruck des Feinscrolls. Die Animation uebernimmt die vier Frames aus
+`assets/flappy.gif` in Originalreihenfolge mit je fuenf PAL-Frames (100 ms),
+auch beim Fallen. Das Kopieren bleibt auf den kleinen dynamischen
 Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 
 ### Farben und Animation
@@ -152,9 +152,11 @@ liegenden Rohrkanten, Decke und Boden. Dekorative Loecher in Rohrkappen und
 Bodenmustern gehoeren zur festen Flaeche. Vollstaendig leere Vogelzeichen
 werden weder als Treffer gewertet noch gezeichnet; ihre Bildschirmzeichen
 und Farben bleiben erhalten. Dadurch ist direkter Kontakt ohne Grafikmischung
-moeglich, obwohl der Vogel einen bis zu 24 x 24 Pixel grossen Zeichenblock hat.
+moeglich, obwohl der Vogel einen bis zu 32 x 24 Pixel grossen Zeichenblock hat.
 
-Die Kandidatengrafik entsteht zuerst im Arbeits-RAM. Zunaechst wird die
+Die Kandidatengrafik entsteht zuerst im Arbeits-RAM. Ist die Zielposition
+mit neuer Pose und Scrollphase frei, wird sie direkt uebernommen. Nur bei
+einem Treffer werden die Bewegungsachsen einzeln aufgeloest: Zuerst wird die
 vertikale Bewegung bei aktueller Scrollposition geprueft. Trifft die
 Zielposition ein Hindernis, wird sie pixelweise entgegen der Bewegungsrichtung
 bis zum letzten freien Pixel korrigiert. Die maximale Bewegung bleibt unter
@@ -171,7 +173,8 @@ Zeile null liegen; erst ein sichtbares Pixel ausserhalb des Feldes kollidiert.
 
 Horizontal verschobene Maskenzeilen werden nach Pose und Scrollphase
 zwischengespeichert, damit mehrere vertikale Proben keine erneuten Bitshifts
-brauchen. Die gesamte Berechnung erfolgt vor dem Warten auf den unteren Rand;
+brauchen. Der folgende Feinscrollschritt verschiebt den Cache nur um ein Bit,
+anstatt alle horizontalen Verschiebungen erneut auszufuehren. Die gesamte Berechnung erfolgt vor dem Warten auf den unteren Rand;
 erst dort werden Bildschirm, Zeichensatz und Scrollregister aktualisiert.
 
 ## Laufzeitarchitektur
@@ -227,7 +230,7 @@ Reserve. Ein Bitmap-Doppelpuffer ist damit ausgeschlossen.
 
 Die Frame-Schleife hat ein Budget von einem PAL-Frame. Die gewoehnliche
 Ausfuehrung aktualisiert nur Eingabe, Physik, einen Scrollwert, gegebenenfalls
-eine Randspalte und maximal sechs dynamische Vogelglyphen. Full-Screen-Loops,
+eine Randspalte und maximal zwoelf dynamische Vogelglyphen. Full-Screen-Loops,
 ROM-Aufrufe, Diskettenzugriffe und zeitvariable Wartezeiten sind innerhalb der
 Schleife verboten. Ein optionaler Rastermarker im Debug-Build macht die
 Ausfuehrungszeit sichtbar.

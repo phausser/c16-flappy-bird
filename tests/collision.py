@@ -45,12 +45,12 @@ def mask(name):
     cpu.memory[SYMBOLS['MASK_POINTER'] + 1] = address >> 8
 
 
-MASKS = ('BIRD_MASK_UP', 'BIRD_MASK_MID', 'BIRD_MASK_DOWN', 'BIRD_MASK_DIVE')
+MASKS = tuple(f'BIRD_MASK_{i}' for i in range(4))
 PIXELS = {}
 for name in MASKS:
-    data = cpu.memory[SYMBOLS[name]:SYMBOLS[name] + 32]
-    PIXELS[name] = [(x, y) for y in range(16) for x in range(16)
-                    if data[y * 2 + x // 8] & (128 >> (x % 8))]
+    data = cpu.memory[SYMBOLS[name]:SYMBOLS[name] + 42]
+    PIXELS[name] = [(x, y) for y in range(14) for x in range(20)
+                    if data[y * 3 + x // 8] & (128 >> (x % 8))]
 
 
 def oracle(name, bird_y, world, phase, pending):
@@ -130,9 +130,9 @@ for world in (0, 12):
                 # of the glyph allocation (including negative top rows).
                 actual = set()
                 for row in range(25):
-                    for col in range(12, 15):
+                    for col in range(12, 16):
                         glyph = cpu.memory[0xc00 + row * 40 + col]
-                        if 4 <= glyph <= 12:
+                        if 4 <= glyph <= 15:
                             for line in range(8):
                                 bits = cpu.memory[0x3400 + glyph * 8 + line]
                                 for bit in range(8):
@@ -144,6 +144,17 @@ for world in (0, 12):
                 assert bytes(cpu.memory[0x800:0x1000]) == clean
                 render_count += 1
 print(f'{render_count} render/restore cases passed', flush=True)
+
+# Exact GIF cadence: initialization displays frame 0; each pose lasts five
+# PAL frames, including wraparound. Falling must not replace the supplied art.
+scene()
+sequence = [get('MASK_POINTER') | cpu.memory[SYMBOLS['MASK_POINTER'] + 1] << 8]
+for _ in range(39):
+    put('BIRD_VELOCITY', 3)
+    call('select_bird_mask')
+    sequence.append(get('MASK_POINTER') | cpu.memory[SYMBOLS['MASK_POINTER'] + 1] << 8)
+assert sequence == [SYMBOLS[MASKS[(tick // 5) % 4]] for tick in range(40)]
+print('Four-frame GIF order and 100 ms cadence passed', flush=True)
 
 # CPU-only frame harness: keep input/raster externally controlled.
 for name in ('wait_for_frame', 'read_input', 'commit_video_ptr'):
@@ -168,6 +179,8 @@ def position(y, velocity, name):
     put('BIRD_VELOCITY', velocity)
     put('BIRD_VELOCITY_FRACTION', 0)
     mask(name)
+    put('BIRD_FRAME_INDEX', MASKS.index(name))
+    put('BIRD_ANIM_TIMER', 5)
     call('compose_bird')
     call('render_bird')
 
@@ -175,10 +188,10 @@ def position(y, velocity, name):
 max_cycles = 0
 # Fast downward and upward movement stops partway through the proposed step.
 for world, start, velocity, expected, name in (
-    (0, 162, 3, 163, 'BIRD_MASK_DIVE'),
-    (12, 114, 3, 115, 'BIRD_MASK_DIVE'),
-    (12, 54, -2, 53, 'BIRD_MASK_UP'),
-    (0, -2, -2, -3, 'BIRD_MASK_UP'),
+    (0, 161, 3, 162, 'BIRD_MASK_0'),
+    (12, 113, 3, 114, 'BIRD_MASK_0'),
+    (12, 56, -2, 55, 'BIRD_MASK_0'),
+    (0, 0, -2, -1, 'BIRD_MASK_0'),
 ):
     for phase in range(8):
         scene(world, phase)
@@ -198,17 +211,17 @@ for world, start, velocity, expected, name in (
 
 # A downward wing pose would intersect the pipe; retain the safe old pose.
 scene(12)
-position(115, 0, 'BIRD_MASK_MID')
-put('BIRD_ANIM_TIMER', 15)
+position(115, 0, 'BIRD_MASK_2')
+put('BIRD_ANIM_TIMER', 0)
 frame()
 assert get('GAME_OVER') == 0
-assert get('MASK_POINTER') == SYMBOLS['BIRD_MASK_MID'] & 255
+assert get('MASK_POINTER') == SYMBOLS['BIRD_MASK_2'] & 255
 
 # Fly horizontally into a pipe. At impact the last visible pixel is exactly
 # one pixel left of its solid cell face, and a further scroll is rejected.
 for initial_world in range(8):
     scene(initial_world, 7)
-    position(32, 0, 'BIRD_MASK_MID')
+    position(32, 0, 'BIRD_MASK_0')
     for _ in range(200):
         put('BIRD_VELOCITY', 0)
         put('BIRD_VELOCITY_FRACTION', 0)
@@ -219,8 +232,8 @@ for initial_world in range(8):
     else:
         raise AssertionError('pipe was not hit')
     world, phase = get('WORLD_COLUMN'), get('SCROLL_OFFSET')
-    assert not oracle('BIRD_MASK_MID', 32, world, phase, 0)
-    assert oracle('BIRD_MASK_MID', 32, world, phase, 1)
+    assert not oracle('BIRD_MASK_0', 32, world, phase, 0)
+    assert oracle('BIRD_MASK_0', 32, world, phase, 1)
     pipe_col = next(col for col in range(12, 40) if 24 <= (world + col) % 32 < 27)
-    assert pipe_col * 8 + phase == 119
+    assert pipe_col * 8 + phase == 123
 print(f'Sweep, contact, animation, freeze and restart passed; max frame CPU cycles: {max_cycles}')

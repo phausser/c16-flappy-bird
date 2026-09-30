@@ -49,7 +49,7 @@ ueber zwei Umbrueche bei einem Pixel pro Frame, oben und unten gleich.
 
 ## Meilenstein 2 -- Vogel mit Pixelbewegung
 
-- [x] Vogelmasken fuer mindestens drei Fluegelstellungen als 16 x 16-Bitdaten
+- [x] Vogelmasken aus `assets/flappy.gif` als vier 20 x 14-Bitbilder
   in den Zeichensatz-/Assetbereich aufnehmen.
 - [x] Dynamische Vogelglyphen und die erforderlichen Bildschirmzellen
   reservieren.
@@ -57,7 +57,8 @@ ueber zwei Umbrueche bei einem Pixel pro Frame, oben und unten gleich.
   Geschwindigkeitsgrenzen implementieren.
 - [x] Maskenzeilen mit den unteren drei Y-Bits in die dynamischen Glyphen
   verschieben; Ueberlauf in die dritte Zeichenzeile korrekt behandeln.
-- [x] Fluegelphase und Fallpose aus Flugzustand/Geschwindigkeit waehlen.
+- [x] Vier GIF-Frames in Originalreihenfolge mit je 100 ms abspielen,
+  auch beim Fallen; keine zusaetzliche Fallpose.
 - [x] Frueheres Vogelbild loeschen, neues Bild setzen und Kanten an oberen
   sowie unteren Spielfeldgrenzen pruefen.
 

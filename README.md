@@ -33,3 +33,9 @@ in a Python virtual environment): `python tests/collision.py` after `make`.
 These cover every pose and scroll phase, pixel contact, empty-cell rendering,
 animation near edges, freeze and restart. The tests emulate the CPU; use VICE
 for TED raster timing and visual checks.
+
+The bird uses `assets/flappy.gif` at its original 20×14 pixels: four frames,
+100 ms each (five PAL frames). Fully transparent pixels remain transparent;
+opaque pixels use the game's bird color. Regenerate the checked-in assembler
+masks with `python3 tools/import_bird.py` (requires Pillow). Normal builds
+need neither Pillow nor GIF decoding.

@@ -67,11 +67,11 @@ draw_accepted_bird:
 
 * = CHARSET_RAM
 !fill 8, 0
-; Glyphs 1-3 form the playfield. Glyphs 4-12 are the dynamic bird area
-; (left, right, tail columns, each with three rows). Only accepted candidate
+; Glyphs 1-3 form the playfield. Glyphs 4-15 are the dynamic bird area
+; (four columns, each with three rows). Only accepted candidate
 ; glyphs are copied here; collision probes never modify the live charset.
 !byte $ff, $ff, $ff, $ff, $ff, $ff, $ff, $ff
 !byte $7e, $ff, $ff, $ff, $ff, $ff, $ff, $7e
 !byte $aa, $55, $aa, $55, $aa, $55, $aa, $55
-!fill 72, 0
-!fill CHARSET_SIZE - 104, 0
+!fill BIRD_GLYPH_BYTES, 0
+!fill CHARSET_SIZE - 32 - BIRD_GLYPH_BYTES, 0

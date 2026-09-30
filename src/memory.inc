@@ -10,7 +10,7 @@
 ; $1800-$1be7  Back color RAM. The scroll builds the next frame here.
 ; $1c00-$1fe7  Back screen RAM. $FF14 flips to this pair in the border.
 ; $2000-$2fff  Free for future game state
-; $3000-$30a6  Game state, candidate glyphs, saved cells, shifted-mask cache
+; $3000-$30d1  Game state, candidate glyphs, saved cells, shifted-mask cache
 ; $3100-$33ff  Reserved for obstacle ring buffer
 ; $3400-$3bff  RAM-resident 256-glyph character set
 ; $3c00-$3fff  1 KiB safety reserve
@@ -35,15 +35,17 @@ BIRD_STEP = GAME_STATE_RAM + 3
 BIRD_OLD_MASK = GAME_STATE_RAM + 4
 ; Two bytes for the previous animation mask pointer.
 BIRD_CANDIDATE = GAME_STATE_RAM + $10
-; 72 candidate glyph bytes, followed by nine occupancy flags.
-BIRD_OCCUPIED = GAME_STATE_RAM + $58
-BIRD_UNDER_GLYPH = GAME_STATE_RAM + $61
-BIRD_UNDER_COLOR = GAME_STATE_RAM + $6a
-CELL_INDEX = GAME_STATE_RAM + $73
-BIRD_SHIFTED = GAME_STATE_RAM + $74
-; Three columns of sixteen horizontally shifted mask rows.
-BIRD_CACHE_SHIFT = GAME_STATE_RAM + $a4
-BIRD_CACHE_MASK = GAME_STATE_RAM + $a5
+; 96 glyph bytes, twelve occupancy flags and twelve saved glyph/color pairs.
+BIRD_OCCUPIED = GAME_STATE_RAM + $70
+BIRD_UNDER_GLYPH = GAME_STATE_RAM + $7c
+BIRD_UNDER_COLOR = GAME_STATE_RAM + $88
+CELL_INDEX = GAME_STATE_RAM + $94
+BIRD_SHIFTED = GAME_STATE_RAM + $95
+; Four columns of fourteen horizontally shifted mask rows.
+BIRD_CACHE_SHIFT = GAME_STATE_RAM + $cd
+BIRD_CACHE_MASK = GAME_STATE_RAM + $ce
+BIRD_FRAME_INDEX = GAME_STATE_RAM + $d0
+BIRD_ORIGIN_Y = GAME_STATE_RAM + $d1
 OBSTACLE_BUFFER_RAM = $3100
 CHARSET_RAM = $3400
 CHARSET_SIZE = $0800
@@ -98,3 +100,4 @@ BIRD_SHIFT_LEFT = $3c
 BIRD_SHIFT_RIGHT = $3d
 BIRD_SHIFT_TAIL = $3e
 BIRD_SHIFT_COUNT = $3f
+BIRD_SHIFT_EXTRA = $19

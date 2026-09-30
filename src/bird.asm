@@ -4,7 +4,10 @@ initialise_bird:
     sta BIRD_VELOCITY_FRACTION
     sta BIRD_VELOCITY
     sta BIRD_ANIM_TIMER
+    sta BIRD_FRAME_INDEX
     sta SCROLL_PENDING
+    lda #BIRD_FRAME_TICKS
+    sta BIRD_ANIM_TIMER
     lda #$ff
     sta BIRD_CACHE_SHIFT
     lda #BIRD_START_Y
@@ -73,7 +76,7 @@ compose_bird:
     ror
     sta BIRD_TOP_ROW
     jsr prepare_shifted_mask
-    ldx #71
+    ldx #BIRD_GLYPH_BYTES - 1
     lda #0
 clear_candidate_glyphs:
     sta BIRD_CANDIDATE,x
@@ -84,13 +87,15 @@ clear_candidate_glyphs:
 copy_candidate_rows:
     lda BIRD_SHIFTED,x
     sta BIRD_CANDIDATE,y
-    lda BIRD_SHIFTED + 16,x
+    lda BIRD_SHIFTED + BIRD_HEIGHT,x
     sta BIRD_CANDIDATE + 24,y
-    lda BIRD_SHIFTED + 32,x
+    lda BIRD_SHIFTED + (BIRD_HEIGHT * 2),x
     sta BIRD_CANDIDATE + 48,y
+    lda BIRD_SHIFTED + (BIRD_HEIGHT * 3),x
+    sta BIRD_CANDIDATE + 72,y
     iny
     inx
-    cpx #16
+    cpx #BIRD_HEIGHT
     bcc copy_candidate_rows
     ; One occupancy flag per glyph. A blank cell must keep BOTH the
     ; environment character and its color, even in the overflow row.
@@ -111,22 +116,41 @@ candidate_cell:
     adc #8
     tax
     iny
-    cpy #9
+    cpy #BIRD_CELLS
     bne candidate_cell
     rts
 
 ; Horizontal bit shifts are the expensive part. Cache them across Y
 ; probes and frames, keyed by the source pose and hardware counter-shift.
 prepare_shifted_mask:
-    lda BIRD_H_SHIFT
-    cmp BIRD_CACHE_SHIFT
-    bne rebuild_shifted_mask
     lda MASK_POINTER
     cmp BIRD_CACHE_MASK
     bne rebuild_shifted_mask
     lda MASK_POINTER + 1
     cmp BIRD_CACHE_MASK + 1
     bne rebuild_shifted_mask
+    lda BIRD_H_SHIFT
+    cmp BIRD_CACHE_SHIFT
+    beq shifted_mask_ready
+    ; Consecutive fine-scroll phases differ by exactly one bit. Shift the
+    ; cached four bytes once instead of rebuilding all shifts from scratch.
+    sec
+    sbc BIRD_CACHE_SHIFT
+    cmp #1
+    bne rebuild_shifted_mask
+    lda BIRD_CACHE_SHIFT
+    cmp #7
+    bcs rebuild_shifted_mask
+    inc BIRD_CACHE_SHIFT
+    ldx #BIRD_HEIGHT - 1
+shift_cached_row:
+    lsr BIRD_SHIFTED,x
+    ror BIRD_SHIFTED + BIRD_HEIGHT,x
+    ror BIRD_SHIFTED + (BIRD_HEIGHT * 2),x
+    ror BIRD_SHIFTED + (BIRD_HEIGHT * 3),x
+    dex
+    bpl shift_cached_row
+shifted_mask_ready:
     rts
 rebuild_shifted_mask:
     lda BIRD_H_SHIFT
@@ -144,8 +168,11 @@ copy_bird_rows:
     lda (MASK_POINTER),y
     sta BIRD_SHIFT_RIGHT
     iny
-    lda #0
+    lda (MASK_POINTER),y
     sta BIRD_SHIFT_TAIL
+    iny
+    lda #0
+    sta BIRD_SHIFT_EXTRA
     lda BIRD_H_SHIFT
     beq store_shifted_row
     sta BIRD_SHIFT_COUNT
@@ -153,17 +180,20 @@ shift_bird_row:
     lsr BIRD_SHIFT_LEFT
     ror BIRD_SHIFT_RIGHT
     ror BIRD_SHIFT_TAIL
+    ror BIRD_SHIFT_EXTRA
     dec BIRD_SHIFT_COUNT
     bne shift_bird_row
 store_shifted_row:
     lda BIRD_SHIFT_LEFT
     sta BIRD_SHIFTED,x
     lda BIRD_SHIFT_RIGHT
-    sta BIRD_SHIFTED + 16,x
+    sta BIRD_SHIFTED + BIRD_HEIGHT,x
     lda BIRD_SHIFT_TAIL
-    sta BIRD_SHIFTED + 32,x
+    sta BIRD_SHIFTED + (BIRD_HEIGHT * 2),x
+    lda BIRD_SHIFT_EXTRA
+    sta BIRD_SHIFTED + (BIRD_HEIGHT * 3),x
     inx
-    cpy #32
+    cpy #BIRD_MASK_BYTES
     bne copy_bird_rows
     rts
 
@@ -187,22 +217,22 @@ clear_bird_cell:
     sta (SCREEN_SOURCE),y
     inx
     iny
-    cpy #BIRD_SCREEN_COLUMN + 3
+    cpy #BIRD_SCREEN_COLUMN + BIRD_COLUMNS
     bcc clear_bird_cell
 clear_next_row:
     inc ROW_INDEX
     lda CELL_INDEX
     clc
-    adc #3
+    adc #BIRD_COLUMNS
     sta CELL_INDEX
-    cmp #9
+    cmp #BIRD_CELLS
     bcc clear_bird_row
     rts
 
 ; Publish only the accepted scratch image. Occupancy uses column-major
 ; glyph order, while the saved screen cells are in row-major order.
 render_bird:
-    ldx #71
+    ldx #BIRD_GLYPH_BYTES - 1
 publish_bird_glyphs:
     lda BIRD_CANDIDATE,x
     sta CHARSET_RAM + (GLYPH_BIRD_LEFT_ROW0 * 8),x
@@ -238,48 +268,38 @@ render_bird_cell:
 render_cell_done:
     inc CELL_INDEX
     iny
-    cpy #BIRD_SCREEN_COLUMN + 3
+    cpy #BIRD_SCREEN_COLUMN + BIRD_COLUMNS
     bcc render_bird_cell
     jmp render_row_done
 render_next_row:
     lda CELL_INDEX
     clc
-    adc #3
+    adc #BIRD_COLUMNS
     sta CELL_INDEX
 render_row_done:
     inc ROW_INDEX
     lda CELL_INDEX
-    cmp #9
+    cmp #BIRD_CELLS
     bcc render_bird_row
     rts
 
 bird_cell_order:
-    !byte 0, 3, 6, 1, 4, 7, 2, 5, 8
+    !byte 0, 3, 6, 9, 1, 4, 7, 10, 2, 5, 8, 11
 
-; Picks the source mask for this frame: a fast fall selects the dive pose,
-; otherwise the wing cycle advances on a timer. Result goes in MASK_POINTER.
+; GIF frames last 100 ms each: five PAL frames, independent of velocity.
 select_bird_mask:
-    lda BIRD_VELOCITY
-    bmi choose_animated_mask
-    cmp #BIRD_DIVE_VELOCITY
-    bcc choose_animated_mask
-
-    lda #<BIRD_MASK_DIVE
-    sta MASK_POINTER
-    lda #>BIRD_MASK_DIVE
-    sta MASK_POINTER + 1
-    rts
-
-choose_animated_mask:
-    inc BIRD_ANIM_TIMER
     lda BIRD_ANIM_TIMER
-    lsr
-    lsr
-    lsr
-    and #$03
-    tax
-    lda wing_phase_table,x
-    tax
+    bne bird_animation_tick
+    lda BIRD_FRAME_INDEX
+    clc
+    adc #1
+    and #3
+    sta BIRD_FRAME_INDEX
+    lda #BIRD_FRAME_TICKS
+    sta BIRD_ANIM_TIMER
+bird_animation_tick:
+    dec BIRD_ANIM_TIMER
+    ldx BIRD_FRAME_INDEX
     lda wing_mask_table_lo,x
     sta MASK_POINTER
     lda wing_mask_table_hi,x
@@ -294,89 +314,9 @@ row_to_pointers:
     ldy VISIBLE_COLOR_HI
     jmp point_row
 
-; -----------------------------------------------------------------------
-; Bird sprite data. Each mask is 16 rows of (left-byte, right-byte) making
-; a 16x16 1-bit image. render_bird places it at a vertical byte offset and
-; shifts it right by 7 - SCROLL_OFFSET so the fine scroll does not drag the
-; bird. Reached only via MASK_POINTER, never by falling through code.
-; -----------------------------------------------------------------------
-
-wing_phase_table:
-    !byte 0, 1, 2, 1
-
 wing_mask_table_lo:
-    !byte <BIRD_MASK_UP, <BIRD_MASK_MID, <BIRD_MASK_DOWN
+    !byte <BIRD_MASK_0, <BIRD_MASK_1, <BIRD_MASK_2, <BIRD_MASK_3
 wing_mask_table_hi:
-    !byte >BIRD_MASK_UP, >BIRD_MASK_MID, >BIRD_MASK_DOWN
+    !byte >BIRD_MASK_0, >BIRD_MASK_1, >BIRD_MASK_2, >BIRD_MASK_3
 
-BIRD_MASK_UP:
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $3e, $00
-    !byte $7f, $c0
-    !byte $7f, $e0
-    !byte $1f, $f0
-    !byte $3f, $fe
-    !byte $3f, $ff
-    !byte $3f, $fe
-    !byte $1f, $f0
-    !byte $0f, $e0
-    !byte $07, $c0
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-
-BIRD_MASK_MID:
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $07, $c0
-    !byte $0f, $e0
-    !byte $1f, $f0
-    !byte $3f, $fe
-    !byte $ff, $ff
-    !byte $ff, $fe
-    !byte $1f, $f0
-    !byte $0f, $e0
-    !byte $07, $c0
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-
-BIRD_MASK_DOWN:
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $07, $c0
-    !byte $0f, $e0
-    !byte $1f, $f0
-    !byte $3f, $fe
-    !byte $3f, $ff
-    !byte $3f, $fe
-    !byte $1f, $f0
-    !byte $7f, $e0
-    !byte $7f, $c0
-    !byte $3e, $00
-    !byte $1c, $00
-    !byte $00, $00
-
-BIRD_MASK_DIVE:
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
-    !byte $c0, $00
-    !byte $07, $c0
-    !byte $7f, $e0
-    !byte $ff, $f0
-    !byte $3f, $fe
-    !byte $3f, $ff
-    !byte $3f, $fe
-    !byte $1f, $f0
-    !byte $0f, $e0
-    !byte $07, $c0
-    !byte $00, $00
-    !byte $00, $00
-    !byte $00, $00
+!source "src/bird_masks.inc"

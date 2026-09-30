@@ -9,13 +9,24 @@ prepare_bird_frame:
     lda MASK_POINTER + 1
     sta BIRD_OLD_MASK + 1
     lda BIRD_Y_POSITION
-    pha
+    sta BIRD_ORIGIN_Y
     jsr update_bird_physics
     lda BIRD_Y_POSITION
     sta BIRD_TARGET_Y
-    pla
-    sta BIRD_Y_POSITION
     jsr select_bird_mask
+    ; Most frames are clear: compose the final pose and next scroll only
+    ; once. Sub-cell movement cannot tunnel through an eight-pixel obstacle.
+    lda #1
+    sta SCROLL_PENDING
+    jsr compose_bird
+    jsr check_bird_collision
+    bcs resolve_bird_contact
+    rts
+resolve_bird_contact:
+    lda #0
+    sta SCROLL_PENDING
+    lda BIRD_ORIGIN_Y
+    sta BIRD_Y_POSITION
     lda MASK_POINTER
     cmp BIRD_OLD_MASK
     bne check_new_pose
@@ -80,7 +91,7 @@ prepared_frame_done:
 
 ; A nonempty candidate glyph may occupy only sky. Since solid obstacle
 ; faces lie on cell boundaries, this tests actual bird pixels, not its
-; padded 24x24 allocation. Decorative pipe-cap/ground holes stay solid.
+; padded 32x24 allocation. Decorative pipe-cap/ground holes stay solid.
 ; Read current column + 1 when testing the pending matrix wrap.
 check_bird_collision:
     lda #BIRD_SCREEN_COLUMN
@@ -116,7 +127,7 @@ collision_cell:
     beq collision_cell_clear
     cmp #GLYPH_BIRD_LEFT_ROW0
     bcc bird_collision
-    cmp #GLYPH_BIRD_TAIL_ROW2 + 1
+    cmp #GLYPH_BIRD_LAST + 1
     bcs bird_collision
 collision_cell_clear:
     inc CELL_INDEX
@@ -124,11 +135,11 @@ collision_cell_clear:
     tya
     sec
     sbc COLUMN_X
-    cmp #3
+    cmp #BIRD_COLUMNS
     bcc collision_cell
     inc ROW_INDEX
     lda CELL_INDEX
-    cmp #9
+    cmp #BIRD_CELLS
     bcc collision_row
     clc
     rts

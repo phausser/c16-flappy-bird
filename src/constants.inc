@@ -24,20 +24,15 @@ GLYPH_PIPE_BODY = 1
 GLYPH_PIPE_CAP = 2
 GLYPH_GROUND = 3
 
-; The bird is composed at runtime into nine dynamic glyphs: three columns
-; (left, right, tail) by up to three screen rows. The tail column catches
-; the horizontal counter-shift. Each column's three glyphs are consecutive
-; charset entries so the composition routine can address them as one flat
-; 24-byte span.
+; A 20x14 mask plus seven fine-scroll pixels needs four columns, three rows.
+BIRD_HEIGHT = 14
+BIRD_COLUMNS = 4
+BIRD_CELLS = BIRD_COLUMNS * 3
+BIRD_GLYPH_BYTES = BIRD_CELLS * 8
+BIRD_MASK_BYTES = BIRD_HEIGHT * 3
+BIRD_FRAME_TICKS = 5
 GLYPH_BIRD_LEFT_ROW0 = 4
-GLYPH_BIRD_LEFT_ROW1 = 5
-GLYPH_BIRD_LEFT_ROW2 = 6
-GLYPH_BIRD_RIGHT_ROW0 = 7
-GLYPH_BIRD_RIGHT_ROW1 = 8
-GLYPH_BIRD_RIGHT_ROW2 = 9
-GLYPH_BIRD_TAIL_ROW0 = 10
-GLYPH_BIRD_TAIL_ROW1 = 11
-GLYPH_BIRD_TAIL_ROW2 = 12
+GLYPH_BIRD_LAST = GLYPH_BIRD_LEFT_ROW0 + BIRD_CELLS - 1
 
 BIRD_SCREEN_COLUMN = 12
 BIRD_SCREEN_ROW = 10
@@ -46,10 +41,6 @@ BIRD_START_Y = BIRD_SCREEN_ROW * 8
 BIRD_GRAVITY = $18
 BIRD_FLAP_VELOCITY = $fe
 BIRD_MAX_FALL_SPEED = 3
-
-; Falling at or above this speed switches to the dive pose instead of the
-; wing-flap animation cycle.
-BIRD_DIVE_VELOCITY = 2
 
 ; Rows below the sky are a solid collision plane (pattern holes ignored).
 GROUND_FIRST_ROW = 22
