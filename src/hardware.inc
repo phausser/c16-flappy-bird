@@ -45,9 +45,9 @@ TED_YELLOW = $77
 TED_SKY_COLOR = TED_BLUE
 ; Pipe pairs: 01 = yellow highlight, 10 = dark green, 11 = green.
 ; Attribute bit 3 enables multicolor; the bird keeps it clear for hires.
-TED_PIPE_HIGHLIGHT = $77
-TED_PIPE_SHADOW = $25
-TED_PIPE_COLOR = $55 | $08
+TED_PIPE_HIGHLIGHT = (6 << 4) + 5
+TED_PIPE_SHADOW = (3 << 4) + 5
+TED_PIPE_COLOR = (4 << 4) + 5 | $08
 
 ; Black gives the bird the strongest contrast against sky and pipes
 ; alike, so it stays visible airborne, at the lower screen edge, or
