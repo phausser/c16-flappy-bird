@@ -42,12 +42,14 @@ Initialisierung, Laden und Debug-Ausgaben duerfen die KERNAL-Routinen nutzen.
 
 ### Bildschirm
 
-Die Spielansicht verwendet den TED-Textmodus mit einem eigenen Zeichensatz:
-40 x 25 Zeichen zu 8 x 8 Pixeln. Ein fester HUD-Streifen belegt die oberste
-Zeile; Spielfeld, Himmel und Boden belegen die restlichen 24 Reihen. Die
-Rohre bestehen aus wiederverwendbaren Kappen-, Koerper- und Randzeichen. Das
-spart RAM und erlaubt unterschiedliche Hoehen allein durch Umfuellen der
-Screen-Map.
+Die Spielansicht verwendet den TED-Textmodus mit einem eigenen Zeichensatz.
+Die Matrix ist 40 x 25 Zeichen zu 8 x 8 Pixeln. Der TED zeigt 38 Spalten
+(`$FF07` Bit 3 geloescht), damit der Rand die angeschnittene Scroll-Zelle
+verdeckt. Spalten 0 und 39 bleiben Guard-Spalten. Ein fester HUD-Streifen
+belegt die oberste Zeile; Spielfeld, Himmel und Boden belegen die restlichen
+24 Reihen. Die Rohre bestehen aus wiederverwendbaren Kappen-, Koerper- und
+Randzeichen. Das spart RAM und erlaubt unterschiedliche Hoehen allein durch
+Umfuellen der Screen-Map.
 
 Die genaue Lage von Screen-RAM, Color-RAM und Zeichensatz wird als symbolische
 Memory-Map in `src/memory.inc` definiert. Vor der Implementierung wird sie
@@ -57,18 +59,36 @@ geprueft; keinerlei magische Adressen in der Spiellogik.
 ### Pixelweiches horizontales Scrolling
 
 TED-Hardware-Feinscroll verschiebt die Zeichenanzeige in acht
-Ein-Pixel-Schritten. Pro PAL-Frame wird der Scroll-Offset um ein Pixel
-fortgeschaltet. Beim Ueberlauf von 7 auf 0 wird am rechten Rand eine neue
-Zeichenspalte in die Screen-Map geschrieben und die logische Weltspalte
-inkrementiert.
+Ein-Pixel-Schritten. Pro PAL-Frame sinkt der Offset um ein Pixel, von 7 nach
+0. Die sichtbare Matrix wird dabei nicht an Ort und Stelle verschoben: diese
+Kopie lief ueber das Textfenster hinaus, und die untere Bildhaelfte wurde
+schon mit dem neuen Offset gezeichnet, waehrend die Zeilen noch halb auf der
+alten Spalte standen.
 
-Damit die neu eingeblendete Spalte ausserhalb der sichtbaren Kante vorbereitet
-werden kann, besitzt die Map mindestens eine Guard-Spalte. Die Implementierung
-haelt die TED-Registerzugriffe in `src/video.asm` gekapselt. Ein dort
-abgelegter Test verifiziert nach der Registerrecherche auf echter
-C16-/VICE-Hardware: Scrollrichtung, Bitmaske, sichtbare Spaltenzahl und
-stabilen 40-Spalten-Modus. Eine falsche Annahme zu TED-Registerbits darf nicht
-in die Spielmodule durchsickern.
+Stattdessen gibt es zwei Textpuffer. Sichtbar starten Farbe `$0800` und
+Screen `$0C00` (`$FF14` = `$0C`). Versteckt liegen Farbe `$1800` und Screen
+`$1C00` (`$FF14` = `$18`). In den acht Frames bis zum Umbruch wandern die
+beiden Rohrbaender (je sechs Zeilen, erst Zeichen, dann Farbe) in acht
+Stuecken zu je drei Zeilen in den versteckten Puffer. Himmel, Luecke und
+Boden sind in jeder Spalte gleich und werden einmal beim Start gespiegelt.
+Im Frame vor dem Umbruch erhaelt Spalte 39 des versteckten Puffers die
+naechste Weltspalte. Im unteren Rand (Raster `$F0`) schreibt der Umbruch nur
+noch Scroll zurueck auf 7 und `$FF14` auf den fertigen Puffer. Acht Pixel
+Matrix nach links und sieben Pixel Scroll nach rechts ergeben ein Pixel
+nach links.
+
+`$FF14` wird am Anfang einer Rasterzeile abgetastet. Ein Schreiben spaeter
+in der Zeile bleibt haengen und verfaellt, sobald das Textfenster zu ist.
+Der Vogel wird nur auf den Puffer gezeichnet, den der TED gerade zeigt, und
+vor dem Kopieren geloescht, damit seine Glyphen nicht in die Rohrzeilen
+rutschen. Bit 7 der Stueckliste waehlt Color-RAM. Der Test vergleicht das
+Byte mit `$80`: das `inc` des Index zwischen Laden und Aufruf ueberschreibt
+das Negative-Flag.
+
+Die TED-Registerzugriffe bleiben in `src/video.asm`. Der Code endet vor
+`$1800`, sonst ueberschreibt die erste Spiegelkopie das Programm. Eine
+falsche Annahme zu TED-Registerbits darf nicht in die Spielmodule
+durchsickern.
 
 Die Standardgeschwindigkeit betraegt ein Pixel pro Frame. Damit ist die
 Bewegung optisch kontinuierlich und die Spielsimulation bleibt einfach:
@@ -135,16 +155,18 @@ Vogelmaske und wird mit Konstanten dokumentiert, damit das Spiel fair bleibt.
 ```text
 reset/init
   -> video + eigener Zeichensatz + Eingabe initialisieren
+  -> Spielfeld in beide Textpuffer spiegeln
   -> Titelbild
   -> neuer Lauf
   -> frame loop
-       frame-sync
+       frame-sync auf der aufsteigenden Flanke von Raster $F0
        input
+       bisheriges Vogelbild loeschen
        physics
-       obstacle generation / scoring / collision
-       scroll preparation
-       bird glyph composition
-       TED register commit
+       obstacle generation / scoring / collision   (ab Meilenstein 3)
+       $FF07 schreiben, beim Umbruch auch $FF14
+       ein Teilstueck in den versteckten Puffer kopieren
+       Vogel auf den sichtbaren Puffer zeichnen
   -> game-over
   -> Titelbild oder neuer Lauf
 ```
@@ -172,10 +194,10 @@ Vorgesehene Quelldateien:
 ## RAM- und Performance-Budget
 
 Die Implementierung muss auf 16 KiB funktionieren; eine 64-KiB-Konfiguration
-darf nie vorausgesetzt werden. Vor dem Codieren wird eine konkrete
-Byteaufstellung in `src/memory.inc` festgehalten. Sie muss Code, Daten,
-Screen-, Farb- und Zeichensatzspeicher sowie Stack einschliessen und mindestens
-256 Byte ungenutzten RAM als Sicherheitsreserve nachweisen.
+darf nie vorausgesetzt werden. Die konkrete Byteaufstellung steht in
+`src/memory.inc`. Sie umfasst Code, Daten, beide Textpuffer, Zeichensatz und
+Stack. Der zweite Puffer belegt `$1800-$1FE7`. Ab `$3C00` bleiben 1 KiB
+Reserve. Ein Bitmap-Doppelpuffer ist damit ausgeschlossen.
 
 Die Frame-Schleife hat ein Budget von einem PAL-Frame. Die gewoehnliche
 Ausfuehrung aktualisiert nur Eingabe, Physik, einen Scrollwert, gegebenenfalls
@@ -204,4 +226,5 @@ Ausfuehrungszeit sichtbar.
 - Mehrspielermodus
 - Persistenter Bestwert auf Diskette/Kassette
 - NTSC-spezifisches Timing
-- Bitmap-Grafik oder Software-Smoothscroll eines kompletten Bildschirms
+- Bitmap-Grafik oder ein Verschieben der ganzen Matrix im sichtbaren Frame.
+  Der zweite Textpuffer ist der vorgesehene Scrollweg und gehoert dazu.

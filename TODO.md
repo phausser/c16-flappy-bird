@@ -30,18 +30,22 @@ zaehlt exakt sichtbar mit PAL-Frame-Tempo.
 
 ## Meilenstein 1 -- Feinscroll-Prototyp
 
-- [x] Einen 40-Spalten-Spielbereich mit Himmel, Bodenmuster und
-  Rohr-Testspalten rendern.
+- [x] Einen Spielbereich mit Himmel, Boden und Rohr-Testspalten rendern.
+  Sichtbar sind 38 Spalten; die Matrix bleibt 40 Byte breit, Spalten 0 und
+  39 liegen unter dem Rand.
 - [x] TED-Horizontalfeinscroll fuer alle acht Ein-Pixel-Offsets isoliert
   implementieren und Richtung/Maskierung mit einem sichtbaren Marker pruefen.
-- [x] Beim Offset-Ueberlauf genau eine vorbereitete Spalte am rechten Rand
-  nachfuellen; keine Vollbild-Redraws im Frame.
+- [x] Die naechste Spalte im versteckten Textpuffer vorbereiten und `$FF14`
+  erst im unteren Rand kippen. Acht Teilstuecke pro Umbruch, keine
+  Vollbild-Redraws im Frame.
 - [x] Boden- und Rohrmuster an die gleiche logische Weltkoordinate binden.
 - [x] Einen Messrahmen oder Debugzaehler einbauen, um fehlende/doppelte
   Nachfuellvorgaenge aufzudecken.
 
 **Abnahme:** Ein Rohr und das Bodenmuster bewegen sich mindestens 30 Sekunden
-ohne Acht-Pixel-Sprung oder Spaltenluecke durch den sichtbaren Bereich.
+ohne Acht-Pixel-Sprung, ohne Riss in der unteren Bildhaelfte und ohne
+Spaltenluecke durch den sichtbaren Bereich. In VICE bleibt die Rohrkante
+ueber zwei Umbrueche bei einem Pixel pro Frame, oben und unten gleich.
 
 ## Meilenstein 2 -- Vogel mit Pixelbewegung
 
@@ -104,7 +108,7 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 | --- | --- |
 | TED-Feinscrollregister oder sichtbare Randraender sind anders als erwartet | Zuerst isolierter Meilenstein-1-Test mit sichtbaren Offsets; Register bleiben in `video.asm` gekapselt. |
 | Dynamische Vogelglyphen zerstoeren benachbarte Grafik | Separaten, festen Zeichensatzbereich reservieren; nur dessen Bytes im Frame beschreiben. |
-| 16-KiB-RAM reicht nicht fuer Komfortpuffer | Keine Vollbild-Doppelbuffer und keine Tilemap; Ringpuffer plus generierte Randspalte einsetzen. |
+| 16-KiB-RAM reicht nicht fuer Komfortpuffer | Der Text-Doppelpuffer ist der Scrollweg und endet vor `$2000`. Kein Bitmap-Doppelpuffer und keine Tilemap; Rohre bleiben Ringpuffer plus generierte Randspalte. |
 | Framebudget wird von Glyphen-Kopien ueberschritten | Nur geaenderte Vogelpose/Position neu zusammensetzen, Quellmasken kompakt halten und mit Rastermarker messen. |
 | Unfaire Kollisionen durch Zeichenraster | Ausschliesslich Fixpunkt-/Pixelboxen fuer die Spielregel nutzen, nicht Screenzeichen. |
 
