@@ -39,3 +39,10 @@ The bird uses `assets/flappy.gif` at its original 20×14 pixels: four frames,
 opaque pixels use the game's bird color. Regenerate the checked-in assembler
 masks with `python3 tools/import_bird.py` (requires Pillow). Normal builds
 need neither Pillow nor GIF decoding.
+
+Pipes have a 72-pixel gap and a 192-pixel start-to-start spacing. Gap starts
+vary between rows 4 and 10, changing by at most 16 pixels per pipe. The first
+pipe keeps the familiar centered gap. Restart resets the fixed seed (`$5d`);
+change `PIPE_RANDOM_SEED` in `src/constants.inc` to test another sequence.
+`python tests/obstacles.py` verifies generation, restarts, screen/color copies,
+ring/counter wraparound and an automated flight through changing gaps.

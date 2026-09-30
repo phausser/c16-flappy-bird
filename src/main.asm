@@ -25,6 +25,7 @@ restart_round:
     lda #0
     sta GAME_OVER
     jsr initialise_video
+    jsr initialise_obstacles
     jsr render_playfield
     ; The hidden buffer must already match the playfield before the bird is
     ; painted, so a later flip never reveals a second bird.
@@ -55,6 +56,7 @@ draw_accepted_bird:
 
 !source "src/collision.asm"
 !source "src/video.asm"
+!source "src/obstacles.asm"
 !source "src/render.asm"
 !source "src/bird.asm"
 !source "src/input.asm"

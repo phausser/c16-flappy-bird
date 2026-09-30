@@ -8,16 +8,18 @@ SCROLL_SLICE_COUNT = 8
 ; PAL raster line in the bottom border, below the 200-pixel playfield.
 ; The scroll register and the buffer flip are stored here.
 RASTER_BORDER = $f0
-PIPE_PATTERN_MASK = $1f
-PIPE_PATTERN_START = 24
-PIPE_PATTERN_END = 27
-
-; Only these rows ever differ between world columns (pipe body/cap). Sky,
-; the gap and the ground are uniform, so they are mirrored once and the
-; per-frame copy moves just the two six-row pipe bands.
-PIPE_TOP_FIRST_ROW = 1
-PIPE_BOTTOM_FIRST_ROW = 16
-PIPE_BLOCK_ROWS = 6
+PIPE_RANDOM_SEED = $5d
+PIPE_RING_MASK = $3f
+PIPE_FIRST_COLUMN = 24
+PIPE_WIDTH_COLUMNS = 3
+PIPE_SPACING_COLUMNS = 24
+PIPE_GAP_HEIGHT = 9
+PIPE_GAP_MIN = 4
+PIPE_GAP_MAX = 10
+PIPE_START_GAP = 7
+PIPE_GAP_MAX_STEP = 2
+; A gap moves by at most two rows (16 pixels) between successive pipes.
+SCROLL_ROWS_PER_SLICE = 6
 
 GLYPH_SKY = 0
 GLYPH_PIPE_BODY = 1
@@ -52,4 +54,14 @@ GROUND_FIRST_ROW = 22
 }
 !if BIRD_FLAP_VELOCITY < $f9 {
     !error "flap speed can tunnel through a collision cell"
+}
+
+!if PIPE_RANDOM_SEED = 0 {
+    !error "pipe RNG seed must be nonzero"
+}
+!if PIPE_GAP_MIN < 2 {
+    !error "top pipe needs room below the HUD"
+}
+!if PIPE_GAP_MAX + PIPE_GAP_HEIGHT >= GROUND_FIRST_ROW {
+    !error "bottom pipe needs room above the ground"
 }

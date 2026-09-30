@@ -53,6 +53,16 @@ for name in MASKS:
                     if data[y * 3 + x // 8] & (128 >> (x % 8))]
 
 
+# Independent descriptor reference for the variable-height pipe sequence.
+WORLD_GAPS = [0] * 256
+seed, gap = 0x5d, 7
+for index, pipe_x in enumerate(range(24, 254, 24)):
+    if index:
+        seed = ((seed << 1) ^ (0x1d if seed & 128 else 0)) & 255
+        gap = max(4, min(10, gap + (-2, -1, 1, 2)[seed & 3]))
+    WORLD_GAPS[pipe_x:pipe_x + 3] = [gap] * 3
+
+
 def oracle(name, bird_y, world, phase, pending):
     next_phase = (phase - pending) % 8
     next_world = world + (pending and phase == 0)
@@ -61,13 +71,17 @@ def oracle(name, bird_y, world, phase, pending):
         col = 12 + (7 - next_phase + x) // 8
         if py < 0 or py >= 176:
             return True
-        if 24 <= (next_world + col) % 32 < 27 and (8 <= py < 56 or 128 <= py < 176):
+        gap = WORLD_GAPS[next_world + col]
+        if gap and (8 <= py < gap * 8 or (gap + 9) * 8 <= py < 176):
             return True
     return False
 
 
 def scene(world=0, phase=7):
     call('initialise_video')
+    call('initialise_obstacles')
+    for _ in range(world):
+        call('generate_obstacle_column')
     put('WORLD_COLUMN', world)
     put('SCROLL_OFFSET', phase)
     call('render_playfield')
@@ -88,7 +102,7 @@ count = 0
 # Edge neighborhoods include every vertical offset; all horizontal phases,
 # masks, both scroll choices, and pipes on either side of the bird.
 ys = list(range(-5, 9)) + list(range(38, 58)) + list(range(109, 131)) + list(range(158, 178))
-for world in (0, 9, 10, 11, 12, 13, 14, 15, 31):
+for world in (0, 9, 10, 11, 12, 13, 14, 15, 31, 34, 36, 38, 60):
     for phase in range(8):
         scene(world, phase)
         before = screen_state()
@@ -108,7 +122,7 @@ print(f'{count} pixel-oracle collision cases passed', flush=True)
 # Every safe edge position must preserve obstacle glyphs AND colors when
 # painted, then restore the complete screen when erased (including row -1).
 render_count = 0
-for world in (0, 12):
+for world in (0, 12, 36, 60):
     for phase in range(8):
         scene(world, phase)
         call('clear_bird')
@@ -234,6 +248,6 @@ for initial_world in range(8):
     world, phase = get('WORLD_COLUMN'), get('SCROLL_OFFSET')
     assert not oracle('BIRD_MASK_0', 32, world, phase, 0)
     assert oracle('BIRD_MASK_0', 32, world, phase, 1)
-    pipe_col = next(col for col in range(12, 40) if 24 <= (world + col) % 32 < 27)
+    pipe_col = next(col for col in range(12, 40) if WORLD_GAPS[world + col])
     assert pipe_col * 8 + phase == 123
 print(f'Sweep, contact, animation, freeze and restart passed; max frame CPU cycles: {max_cycles}')

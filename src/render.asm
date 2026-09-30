@@ -7,25 +7,24 @@ render_initial_column:
     bcc render_initial_column
     rts
 
-; X is the screen column to write. WORLD_COLUMN identifies its leftmost
-; logical world column, so the same deterministic pipe pattern is used when
-; a new right-edge column is prepared. TARGET_SCREEN_HI / TARGET_COLOR_HI
-; select the front buffer at startup and the hidden buffer on a flip.
-; X is restored for the caller's inx.
+; Rendering only reads the ring; RNG advances when a new world column is
+; generated at startup or at the right edge of the hidden buffer.
 render_world_column:
     stx COLUMN_X
-    lda #0
-    sta PIPE_HERE
     txa
     clc
     adc WORLD_COLUMN
-    and #PIPE_PATTERN_MASK
-    cmp #PIPE_PATTERN_START
-    bcc column_pattern_known
-    cmp #PIPE_PATTERN_END
-    bcs column_pattern_known
-    inc PIPE_HERE
-column_pattern_known:
+    and #PIPE_RING_MASK
+    tay
+    lda OBSTACLE_BUFFER_RAM,y
+    sta PIPE_HERE
+    clc
+    adc #PIPE_GAP_HEIGHT
+    sta PIPE_RENDER_GAP_END
+    lda PIPE_HERE
+    sec
+    sbc #1
+    sta PIPE_RENDER_TOP_CAP
     ldy #0
 paint_row:
     sty ROW_INDEX
@@ -35,8 +34,25 @@ paint_row:
     sta CELL_COLOR
     lda PIPE_HERE
     beq store_cell
-    lda pipe_glyph,y
+    cpy #0
     beq store_cell
+    cpy #GROUND_FIRST_ROW
+    bcs store_cell
+    cpy PIPE_HERE
+    bcc top_pipe_cell
+    cpy PIPE_RENDER_GAP_END
+    bcc store_cell
+    beq pipe_cap_cell
+    bne pipe_body_cell
+top_pipe_cell:
+    cpy PIPE_RENDER_TOP_CAP
+    beq pipe_cap_cell
+pipe_body_cell:
+    lda #GLYPH_PIPE_BODY
+    bne set_pipe_cell
+pipe_cap_cell:
+    lda #GLYPH_PIPE_CAP
+set_pipe_cell:
     sta CELL_GLYPH
     lda #TED_PIPE_COLOR
     sta CELL_COLOR
@@ -57,19 +73,10 @@ store_cell:
     ldx COLUMN_X
     rts
 
-; Row 0 and rows 7-15 are sky, 22-24 the ground. pipe_glyph is 0 on those
-; rows; a pipe column overrides the rest (body, cap at the gap).
+; Row 0 is reserved for the future HUD; rows 22-24 remain ground.
 default_glyph:
-    !fill 22, GLYPH_SKY
-    !fill 3, GLYPH_GROUND
+    !fill GROUND_FIRST_ROW, GLYPH_SKY
+    !fill SCREEN_ROWS - GROUND_FIRST_ROW, GLYPH_GROUND
 default_color:
-    !fill 22, TED_SKY_COLOR
-    !fill 3, TED_GROUND_COLOR
-pipe_glyph:
-    !byte 0
-    !fill 5, GLYPH_PIPE_BODY
-    !byte GLYPH_PIPE_CAP
-    !fill 9, 0
-    !byte GLYPH_PIPE_CAP
-    !fill 5, GLYPH_PIPE_BODY
-    !fill 3, 0
+    !fill GROUND_FIRST_ROW, TED_SKY_COLOR
+    !fill SCREEN_ROWS - GROUND_FIRST_ROW, TED_GROUND_COLOR

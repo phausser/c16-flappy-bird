@@ -140,7 +140,7 @@ commit_scroll_offset:
     sta TED_CONTROL2
     rts
 
-; Piece COPY_SLICE is three encoded rows. Bit 7 selects color RAM; the low
+; Each slice contains six encoded rows. Bit 7 selects color RAM; the low
 ; bits are the row. Screen pieces come first, then the same rows of color,
 ; so the hidden buffer is only shown once every pipe cell has been copied.
 copy_current_slice:
@@ -148,8 +148,9 @@ copy_current_slice:
     asl
     clc
     adc COPY_SLICE
+    asl
     sta ROW_INDEX
-    lda #3
+    lda #SCROLL_ROWS_PER_SLICE
     sta PIPE_HERE
 copy_slice_row:
     ldx ROW_INDEX
@@ -161,6 +162,8 @@ copy_slice_row:
     rts
 
 copy_encoded_row:
+    cmp #$ff
+    beq copy_row_done
     ; The caller increments ROW_INDEX between the load and this jsr, and
     ; that inc replaces N. Compare again so bit 7 still selects color RAM.
     cmp #$80
@@ -174,22 +177,26 @@ copy_from_screen:
     ldy VISIBLE_SCREEN_HI
 copy_shifted_row:
     jsr point_row
-    ; dest[0..38] = source[1..39]. Column 39 is written on the flip frame.
+    ; dest[0..38] = source[1..39]. Advance the source pointer once rather
+    ; than adjusting Y twice per byte: variable gaps require more rows.
+    inc SCREEN_SOURCE
+    bne shifted_source_ready
+    inc SCREEN_SOURCE + 1
+shifted_source_ready:
     ldy #0
 copy_shifted_byte:
-    iny
     lda (SCREEN_SOURCE),y
-    dey
     sta (SCREEN_DESTINATION),y
     iny
     cpy #SCREEN_COLUMNS - 1
     bne copy_shifted_byte
+copy_row_done:
     rts
 
-; Column 39 of the hidden buffer shows the world column that is about to
-; scroll in. WORLD_COLUMN is borrowed for the test and restored; swap_buffers
-; is what keeps the increment.
+; Generate the next ring entry and draw it into hidden column 39. Borrow
+; WORLD_COLUMN for addressing and restore it; swap_buffers keeps the increment.
 draw_back_column:
+    jsr generate_obstacle_column
     lda BACK_SCREEN_HI
     sta TARGET_SCREEN_HI
     lda BACK_COLOR_HI
@@ -263,14 +270,18 @@ point_row:
     rts
 
 slice_rows:
-    !byte PIPE_TOP_FIRST_ROW + 0, PIPE_TOP_FIRST_ROW + 1, PIPE_TOP_FIRST_ROW + 2
-    !byte PIPE_TOP_FIRST_ROW + 3, PIPE_TOP_FIRST_ROW + 4, PIPE_TOP_FIRST_ROW + 5
-    !byte PIPE_BOTTOM_FIRST_ROW + 0, PIPE_BOTTOM_FIRST_ROW + 1, PIPE_BOTTOM_FIRST_ROW + 2
-    !byte PIPE_BOTTOM_FIRST_ROW + 3, PIPE_BOTTOM_FIRST_ROW + 4, PIPE_BOTTOM_FIRST_ROW + 5
-    !byte $80 | (PIPE_TOP_FIRST_ROW + 0), $80 | (PIPE_TOP_FIRST_ROW + 1), $80 | (PIPE_TOP_FIRST_ROW + 2)
-    !byte $80 | (PIPE_TOP_FIRST_ROW + 3), $80 | (PIPE_TOP_FIRST_ROW + 4), $80 | (PIPE_TOP_FIRST_ROW + 5)
-    !byte $80 | (PIPE_BOTTOM_FIRST_ROW + 0), $80 | (PIPE_BOTTOM_FIRST_ROW + 1), $80 | (PIPE_BOTTOM_FIRST_ROW + 2)
-    !byte $80 | (PIPE_BOTTOM_FIRST_ROW + 3), $80 | (PIPE_BOTTOM_FIRST_ROW + 4), $80 | (PIPE_BOTTOM_FIRST_ROW + 5)
+!set copy_row = 1
+!do while copy_row < GROUND_FIRST_ROW {
+    !byte copy_row
+    !set copy_row = copy_row + 1
+}
+!set copy_row = 1
+!do while copy_row < GROUND_FIRST_ROW {
+    !byte $80 | copy_row
+    !set copy_row = copy_row + 1
+}
+; Six unused slots. HUD and ground never vary between columns.
+!fill SCROLL_SLICE_COUNT * SCROLL_ROWS_PER_SLICE - (GROUND_FIRST_ROW - 1) * 2, $ff
 
 row_offset_lo:
 !set row_number = 0

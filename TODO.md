@@ -68,11 +68,11 @@ vollstaendig dargestellt.
 
 ## Meilenstein 3 -- Spielregeln
 
-- [ ] Deterministischen Hindernis-Ringpuffer mit Startwert fuer den Zufall
+- [x] Deterministischen Hindernis-Ringpuffer mit Startwert fuer den Zufall
   implementieren.
-- [ ] Lueckenhoehe, Rohrabstand und minimale Sicherheitsmargen als Konstanten
+- [x] Lueckenhoehe, Rohrabstand und minimale Sicherheitsmargen als Konstanten
   definieren.
-- [ ] Neue Rohre nur beim Nachfuellen der rechten Weltspalte einplanen und
+- [x] Neue Rohre nur beim Nachfuellen der rechten Weltspalte einplanen und
   daraus die sichtbaren Rohrzeichen erzeugen.
 - [x] Kollision vor dem Zeichnen gegen Rohre, Decke und Boden pruefen;
   nur sichtbare Vogelpixel beruecksichtigen, leere Vogelzeichen auslassen.
@@ -93,9 +93,9 @@ vergeben.
   abstimmen.
 - [ ] Schwierigkeit langsam an Punktzahl koppeln, ohne unmoegliche
   Rohrfolgen zu erzeugen.
-- [ ] Frame-Budget mit sichtbarem Debugmarker messen und die teuersten
+- [x] Frame-Budget per VICE-Registertrace messen und die teuersten
   Routinen optimieren, falls ein Frame die Rastergrenze ueberschreitet.
-- [ ] Mindestens 5 Minuten Autoplay/Manuelltest in VICE ohne Grafikreste,
+- [x] Mindestens 5 Minuten Autoplay/Manuelltest in VICE ohne Grafikreste,
   Speicherueberlauf oder Frame-Aussetzer ausfuehren.
 - [ ] Kaltstart, Neustart, lange Punktzahl und wiederholte Kollisionen
   pruefen.

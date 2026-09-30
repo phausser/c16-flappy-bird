@@ -68,9 +68,10 @@ alten Spalte standen.
 Stattdessen gibt es zwei Textpuffer. Sichtbar starten Farbe `$0800` und
 Screen `$0C00` (`$FF14` = `$0C`). Versteckt liegen Farbe `$1800` und Screen
 `$1C00` (`$FF14` = `$18`). In den acht Frames bis zum Umbruch wandern die
-beiden Rohrbaender (je sechs Zeilen, erst Zeichen, dann Farbe) in acht
-Stuecken zu je drei Zeilen in den versteckten Puffer. Himmel, Luecke und
-Boden sind in jeder Spalte gleich und werden einmal beim Start gespiegelt.
+variablen Spielfeldzeilen 1-21 (erst Zeichen, dann Farbe) in acht Stuecken
+mit bis zu sechs Zeilen in den versteckten Puffer. Die letzte Stufe hat
+sechs leere Eintraege und erzeugt stattdessen die neue rechte Spalte. HUD
+und Boden bleiben gleich und werden einmal beim Start gespiegelt.
 Im Frame vor dem Umbruch erhaelt Spalte 39 des versteckten Puffers die
 naechste Weltspalte. Im unteren Rand (Raster `$F0`) schreibt der Umbruch nur
 noch Scroll zurueck auf 7 und `$FF14` auf den fertigen Puffer. Acht Pixel
@@ -140,12 +141,21 @@ nur bei einer neuen Tastendruckflanke. Schwerkraft, Impuls und
 Maximalgeschwindigkeiten sind als benannte Konstanten in `src/constants.inc`
 hinterlegt.
 
-Die Rohrwelt wird als Ringpuffer von Hindernissen gespeichert, nicht als
-vollstaendige Tilemap. Jedes Hindernis umfasst mindestens:
+Die Rohrwelt liegt in einem Ringpuffer mit 64 Spalten bei `$3100`.
+Jedes Byte enthaelt die erste Lueckenzeile eines Rohrs oder null fuer Himmel.
+Die Initialisierung erzeugt 40 Spalten; danach entsteht genau eine neue
+Weltspalte beim Nachfuellen des versteckten rechten Rands. Zeichnen und
+Pufferwechsel selbst veraendern den Zufallszustand nicht. Die Maskierung
+mit 63 bleibt auch beim Ueberlauf des 8-Bit-Weltzaehlers korrekt.
 
-- Welt-X-Koordinate in 8.8-Fixpunkt,
-- obere und untere Kante der Luecke in Pixeln,
-- einmalig vergebene Punktwertung.
+Rohre sind drei Zeichen breit und beginnen im Abstand von 24 Zeichen
+(192 Pixeln). Die Luecke ist neun Zeichen (72 Pixel) hoch; ihre erste Zeile
+liegt zwischen 4 und 10. Die erste Luecke beginnt wie bisher in Zeile 7.
+Danach bestimmt ein nichtnulliger 8-Bit-LFSR mit Startwert `$5d` die Aenderung
+um -2, -1, +1 oder +2 Zeilen, begrenzt auf den erlaubten Bereich. Der maximale
+Hoehenwechsel betraegt damit 16 Pixel bei 168 Pixeln freiem Rohrabstand.
+Ein Neustart setzt den Generator zurueck und wiederholt dieselbe Folge.
+Punktwertung und steigende Schwierigkeit folgen separat.
 
 Kollision prueft die sichtbaren Vogelpixel gegen die festen, am Zeichenraster
 liegenden Rohrkanten, Decke und Boden. Dekorative Loecher in Rohrkappen und
@@ -219,6 +229,7 @@ Vorgesehene Quelldateien:
 | `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
 | `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
 | `src/render.asm` | Rohrspalten und Spielfeld |
+| `src/obstacles.asm` | Reproduzierbare Rohrfolge und Spaltenringpuffer |
 
 ## RAM- und Performance-Budget
 

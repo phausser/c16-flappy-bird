@@ -11,7 +11,9 @@
 ; $1c00-$1fe7  Back screen RAM. $FF14 flips to this pair in the border.
 ; $2000-$2fff  Free for future game state
 ; $3000-$30d1  Game state, candidate glyphs, saved cells, shifted-mask cache
-; $3100-$33ff  Reserved for obstacle ring buffer
+; $3100-$313f  Gap start per world column, 64-column ring
+; $3140-$3147  Generator state and renderer scratch
+; $3148-$33ff  Reserved
 ; $3400-$3bff  RAM-resident 256-glyph character set
 ; $3c00-$3fff  1 KiB safety reserve
 
@@ -47,6 +49,14 @@ BIRD_CACHE_MASK = GAME_STATE_RAM + $ce
 BIRD_FRAME_INDEX = GAME_STATE_RAM + $d0
 BIRD_ORIGIN_Y = GAME_STATE_RAM + $d1
 OBSTACLE_BUFFER_RAM = $3100
+PIPE_RANDOM_STATE = $3140
+PIPE_DISTANCE = $3141
+PIPE_CURRENT_GAP = $3142
+PIPE_FIRST = $3143
+PIPE_REMAINING = $3144
+PIPE_WRITE_INDEX = $3145
+PIPE_RENDER_GAP_END = $3146
+PIPE_RENDER_TOP_CAP = $3147
 CHARSET_RAM = $3400
 CHARSET_SIZE = $0800
 RAM_RESERVE_START = $3c00
