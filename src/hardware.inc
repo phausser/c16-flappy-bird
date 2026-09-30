@@ -19,10 +19,13 @@ TED_RASTER_LO = $ff1d
 ; screen matrix there (a light bar, and on some offsets a black block).
 ; Bit 3 = 25 rows. Bit 4 = display on.
 TED_CONTROL1_TEXT_25_ROWS = $1b
-; Bit 3 = 40 columns. Bit 7 stays clear: set, it switches the TED into
+; Bit 3 clear = 38 columns. The border then covers eight pixels on each
+; side, which is where a horizontal scroll would otherwise show the partial
+; column. The screen matrix stays 40 bytes wide; columns 0 and 39 are the
+; hidden guards. Bit 7 stays clear: set, it switches the TED into
 ; 256-character mode and the chargen base then moves in 2 KiB steps, so
 ; $3400 cannot be addressed and $0D aliases onto colour RAM at $0800.
-TED_CONTROL2_TEXT_40_COLS = $08
+TED_CONTROL2_TEXT_38_COLS = $00
 
 TED_BLACK = $00
 TED_GREEN = $57

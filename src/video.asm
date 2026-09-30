@@ -1,7 +1,7 @@
 initialise_video:
     lda #TED_CONTROL1_TEXT_25_ROWS
     sta TED_CONTROL1
-    lda #TED_CONTROL2_TEXT_40_COLS
+    lda #TED_CONTROL2_TEXT_38_COLS
     sta TED_CONTROL2
 
     ; $FF12 bit 2 selects chargen ROM (1) or RAM (0).
@@ -55,7 +55,7 @@ advance_scroll:
     jmp render_world_column
 
 commit_scroll_offset:
-    lda #TED_CONTROL2_TEXT_40_COLS
+    lda #TED_CONTROL2_TEXT_38_COLS
     ora SCROLL_OFFSET
     sta TED_CONTROL2
     rts
