@@ -7,12 +7,20 @@ one-pixel horizontal scroll. The next frame is built in a hidden text buffer
 and `$FF14` flips to it in the bottom border. Collision, score and game over
 are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 
+Play it in the browser: https://phausser.github.io/c16-flappy-bird/
+
 ## Run
 
-Requires [ACME](https://sourceforge.net/projects/acme-crossass/) and VICE
-(`xplus4`).
+Requires [ACME](https://sourceforge.net/projects/acme-crossass/), Python 3 and
+VICE (`xplus4`).
 
 ```sh
-make
-make run
+make           # build/flappy.prg
+make run       # start it in VICE as a PAL C16
+make lint      # build, then check style, names and zero-page addresses
 ```
+
+GitHub Pages (Settings → Pages → Source: GitHub Actions) publishes
+`web/index.html` together with the built PRG. The page loads the program in
+EmulatorJS as a PAL C16. Space flaps; click the picture once so the key
+reaches the emulator.
