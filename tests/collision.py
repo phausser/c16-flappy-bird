@@ -56,7 +56,7 @@ for name in MASKS:
 # Independent descriptor reference for the variable-height pipe sequence.
 WORLD_GAPS = [0] * 256
 seed, gap = 0x5d, 7
-for index, pipe_x in enumerate(range(24, 254, 24)):
+for index, pipe_x in enumerate(range(SYMBOLS['PIPE_FIRST_COLUMN'], 254, SYMBOLS['PIPE_SPACING_COLUMNS'])):
     if index:
         seed = ((seed << 1) ^ (0x1d if seed & 128 else 0)) & 255
         gap = max(4, min(10, gap + (-2, -1, 1, 2)[seed & 3]))

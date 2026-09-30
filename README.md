@@ -12,7 +12,7 @@ cells leave the environment and its colors untouched.
 The pipes use the exact 24-pixel stripe layout from [assets/pipe.png](assets/pipe.png),
 repeated vertically without end caps. Three multicolor glyphs provide yellow
 highlights (`$77`), green (`$55`) and dark green (`$25`) using the TED palette.
-The black bird remains hires. The sky uses a blue luminance ramp. The top border is darkest blue, the side
+The bird remains hires; its TED color is set by TED_BIRD_COLOR in src/hardware.inc. The sky uses a blue luminance ramp. The top border is darkest blue, the side
 border ramps evenly to light blue, and the lower border uses color 9 at
 luminance 5. A TED raster IRQ sets these bands; the active screen occupies
 TED raster-counter lines `$04` through `$CB`. The handler owns the hardware
@@ -61,7 +61,7 @@ opaque pixels use the game's bird color. Regenerate the checked-in assembler
 masks with `python3 tools/import_bird.py` (requires Pillow). Normal builds
 need neither Pillow nor GIF decoding.
 
-Pipes have a 72-pixel gap and a 192-pixel start-to-start spacing. Gap starts
+Pipes have a 72-pixel gap and a 96-pixel start-to-start spacing. Gap starts
 vary between rows 4 and 10, changing by at most 16 pixels per pipe. The first
 pipe keeps the familiar centered gap. Restart resets the fixed seed (`$5d`);
 change `PIPE_RANDOM_SEED` in `src/constants.inc` to test another sequence.

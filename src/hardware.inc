@@ -52,4 +52,5 @@ TED_PIPE_COLOR = $55 | $08
 ; Black gives the bird the strongest contrast against sky and pipes
 ; alike, so it stays visible airborne, at the lower screen edge, or
 ; passing in front of a pipe.
-TED_BIRD_COLOR = TED_BLACK
+; TED color 3 at luminance 5 (bits 6-4 = 5, bits 3-0 = 3).
+TED_BIRD_COLOR = (7 << 4) + 7

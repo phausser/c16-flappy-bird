@@ -37,7 +37,7 @@ def model(length):
     columns = [0] * length
     seed, gap = 0x5d, 7
     gaps = []
-    for index, x in enumerate(range(24, length, 24)):
+    for index, x in enumerate(range(S['PIPE_FIRST_COLUMN'], length, S['PIPE_SPACING_COLUMNS'])):
         if index:
             seed = ((seed << 1) ^ (0x1d if seed & 128 else 0)) & 255
             gap = max(4, min(10, gap + (-2, -1, 1, 2)[seed & 3]))
@@ -63,7 +63,7 @@ print('4096 columns match the model on both restarts; all 7 heights reached', fl
 def expected_cell(world, row, col):
     gap = columns[world + col]
     if gap and (row < gap or row >= gap + 9):
-        glyph = S['GLYPH_PIPE_LEFT'] + (world + col - 24) % 24
+        glyph = S['GLYPH_PIPE_LEFT'] + (world + col - S['PIPE_FIRST_COLUMN']) % S['PIPE_SPACING_COLUMNS']
         return glyph, S['TED_PIPE_COLOR']
     return S['GLYPH_SKY'], S['TED_SKY_COLOR']
 
@@ -86,6 +86,7 @@ assert get('TED_CONTROL2') & 0x10
 assert get('TED_COLOR_MC1') == S['TED_PIPE_HIGHLIGHT']
 assert get('TED_COLOR_MC2') == S['TED_PIPE_SHADOW']
 assert S['TED_PIPE_COLOR'] & 8 and not S['TED_BIRD_COLOR'] & 8
+assert S['TED_BIRD_COLOR'] == 0x77
 # Reference's twelve doubled pixels, with no sky pixels or end-cap rows.
 expected_pairs = [3, 1, 3, 1, 1, 3, 3, 3, 2, 3, 2, 2]
 for y in range(8):

@@ -144,7 +144,8 @@ Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 ### Farben und Animation
 
 Die aktuelle Fassung nutzt einen blauen Helligkeitsverlauf, gruene Rohre
-und einen schwarzen Vogel. Folgende optionale Effekte sind noch offen.
+und einen konfigurierbaren Vogel. Seine aktuelle Farbe kommt aus
+TED_BIRD_COLOR in src/hardware.inc. Folgende optionale Effekte sind noch offen.
 Das Himmel-/Rohr-Schema arbeitet mit
 wenigen, bewusst gewaehlten TED-Farben. Zusatzeffekte duerfen das
 Frame-Budget nicht gefaehrden:
@@ -169,12 +170,12 @@ Weltspalte beim Nachfuellen des versteckten rechten Rands. Zeichnen und
 Pufferwechsel selbst veraendern den Zufallszustand nicht. Die Maskierung
 mit 63 bleibt auch beim Ueberlauf des 8-Bit-Weltzaehlers korrekt.
 
-Rohre sind drei Zeichen breit und beginnen im Abstand von 24 Zeichen
-(192 Pixeln). Die Luecke ist neun Zeichen (72 Pixel) hoch; ihre erste Zeile
+Rohre sind drei Zeichen breit und beginnen im Abstand von 12 Zeichen
+(96 Pixeln). Die Luecke ist neun Zeichen (72 Pixel) hoch; ihre erste Zeile
 liegt zwischen 4 und 10. Die erste Luecke beginnt wie bisher in Zeile 7.
 Danach bestimmt ein nichtnulliger 8-Bit-LFSR mit Startwert `$5d` die Aenderung
 um -2, -1, +1 oder +2 Zeilen, begrenzt auf den erlaubten Bereich. Der maximale
-Hoehenwechsel betraegt damit 16 Pixel bei 168 Pixeln freiem Rohrabstand.
+Hoehenwechsel betraegt damit 16 Pixel bei 168 Pixeln freiem Lueckenbereich.
 Ein Neustart setzt den Generator zurueck und wiederholt dieselbe Folge.
 Punktwertung und steigende Schwierigkeit folgen separat.
 
