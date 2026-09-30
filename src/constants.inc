@@ -51,7 +51,14 @@ BIRD_MAX_FALL_SPEED = 3
 ; wing-flap animation cycle.
 BIRD_DIVE_VELOCITY = 2
 
-; Keeps the full 16x16-plus-overflow sprite within screen rows 0-21 (rows
-; 22-24 are the ground) at every sub-pixel offset.
-BIRD_Y_MIN = 0
-BIRD_Y_MAX = 159
+; Rows below the sky are a solid collision plane (pattern holes ignored).
+GROUND_FIRST_ROW = 22
+
+; Collision's endpoint test must not jump across an eight-pixel solid cell.
+; Fractional carry can add one pixel to the integer downward velocity.
+!if BIRD_MAX_FALL_SPEED >= 7 {
+    !error "fall speed can tunnel through a collision cell"
+}
+!if BIRD_FLAP_VELOCITY < $f9 {
+    !error "flap speed can tunnel through a collision cell"
+}

@@ -113,7 +113,7 @@ drei Spalten mal drei Zeilen.
    Leere Bits zeigen die Hintergrundfarbe; eine Zelle hat nur eine
    Vordergrundfarbe.
 
-Die Kollisionsflaeche umfasst die belegten Zeichenzellen. Der Vogel bewegt
+Die Kollision beruecksichtigt nur nichtleere Vogelzeichen. Der Vogel bewegt
 sich vertikal ohne Acht-Pixel-Spruenge und horizontal ohne den Sieben-Pixel-
 Ruck des Feinscrolls. Die Fluegelanimation wechselt zeitbasiert zwischen drei
 Quellmasken; Fallgeschwindigkeit waehlt zusaetzlich eine aufgerichtete oder
@@ -147,17 +147,32 @@ vollstaendige Tilemap. Jedes Hindernis umfasst mindestens:
 - obere und untere Kante der Luecke in Pixeln,
 - einmalig vergebene Punktwertung.
 
-Kollision prueft die naechste Y-Position und Scrollphase vor jeder sichtbaren
-Aenderung. Die gesamte vom Renderer belegte Flaeche (drei Zeilen, zwei oder
-drei Spalten) muss frei sein, auch wenn einzelne Vogelglyphen leer sind.
-Dadurch bleibt ein kleiner sichtbarer Sicherheitsabstand; Grafikmischung
-und Farbkollisionen werden vermieden. Beim Scrollumbruch entsprechen die
-naechsten Vogelspalten 12-13 den aktuellen Spalten 13-14.
+Kollision prueft die sichtbaren Vogelpixel gegen die festen, am Zeichenraster
+liegenden Rohrkanten, Decke und Boden. Dekorative Loecher in Rohrkappen und
+Bodenmustern gehoeren zur festen Flaeche. Vollstaendig leere Vogelzeichen
+werden weder als Treffer gewertet noch gezeichnet; ihre Bildschirmzeichen
+und Farben bleiben erhalten. Dadurch ist direkter Kontakt ohne Grafikmischung
+moeglich, obwohl der Vogel einen bis zu 24 x 24 Pixel grossen Zeichenblock hat.
 
-Bei einem Treffer bleiben Vogelbild und Scrollposition unveraendert stehen.
-Eine neue Leertastenflanke startet die Runde neu. Die aktuelle Implementierung
-prueft die sichtbare Textmatrix; vorhandene Vogelzeichen gelten als Himmel,
-da nur auf zuvor gepruefte freie Zellen gezeichnet wird.
+Die Kandidatengrafik entsteht zuerst im Arbeits-RAM. Zunaechst wird die
+vertikale Bewegung bei aktueller Scrollposition geprueft. Trifft die
+Zielposition ein Hindernis, wird sie pixelweise entgegen der Bewegungsrichtung
+bis zum letzten freien Pixel korrigiert. Die maximale Bewegung bleibt unter
+acht Pixeln, sodass ein acht Pixel dickes Hindernis nicht uebersprungen wird.
+Erst danach wird der naechste horizontale Ein-Pixel-Schritt geprueft. Beim
+Scrollumbruch werden dafuer die aktuellen Bildschirmspalten um eins versetzt
+gelesen. Ein blockierter Schritt setzt Game-over und stoppt den Scroll.
+
+Die korrigierte Kontaktposition wird noch gezeichnet und dann eingefroren.
+Eine neue Leertastenflanke startet die Runde neu. Wuerde ein Wechsel der
+Fluegelpose an der aktuellen Position ein Hindernis schneiden, bleibt die
+bisherige Pose erhalten. Die transparente Oberkante der Maske darf ueber
+Zeile null liegen; erst ein sichtbares Pixel ausserhalb des Feldes kollidiert.
+
+Horizontal verschobene Maskenzeilen werden nach Pose und Scrollphase
+zwischengespeichert, damit mehrere vertikale Proben keine erneuten Bitshifts
+brauchen. Die gesamte Berechnung erfolgt vor dem Warten auf den unteren Rand;
+erst dort werden Bildschirm, Zeichensatz und Scrollregister aktualisiert.
 
 ## Laufzeitarchitektur
 
@@ -168,10 +183,10 @@ reset/init
   -> Titelbild
   -> neuer Lauf
   -> frame loop
-       frame-sync auf der aufsteigenden Flanke von Raster $F0
        input
        physics (Kandidatenposition)
-       collision -> bei Treffer letztes Bild behalten, game-over
+       collision -> bei Treffer bis zum letzten freien Pixel korrigieren
+       frame-sync auf der aufsteigenden Flanke von Raster $F0
        bisheriges Vogelbild loeschen
        obstacle generation / scoring               (noch offen)
        $FF07 schreiben, beim Umbruch auch $FF14
@@ -198,8 +213,9 @@ Vorgesehene Quelldateien:
 | `src/video.asm` | TED-Setup, Frame-Sync, Feinscroll, Screen-Spalten |
 | `src/charset.asm` | statische Glyphen und dynamischer Vogelbereich |
 | `src/input.asm` | Flankenerkennung fuer Tastatur/Joystick |
-| `src/game.asm` | Physik, Rohrringpuffer, Kollision, Punkte |
-| `src/render.asm` | Rohrspalten, HUD und Vogel-Glyphenkomposition |
+| `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
+| `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
+| `src/render.asm` | Rohrspalten und Spielfeld |
 
 ## RAM- und Performance-Budget
 

@@ -10,7 +10,8 @@
 ; $1800-$1be7  Back color RAM. The scroll builds the next frame here.
 ; $1c00-$1fe7  Back screen RAM. $FF14 flips to this pair in the border.
 ; $2000-$2fff  Free for future game state
-; $3000-$33ff  Reserved for obstacle ring buffer and renderer work data
+; $3000-$30a6  Game state, candidate glyphs, saved cells, shifted-mask cache
+; $3100-$33ff  Reserved for obstacle ring buffer
 ; $3400-$3bff  RAM-resident 256-glyph character set
 ; $3c00-$3fff  1 KiB safety reserve
 
@@ -28,6 +29,21 @@ SCREEN_PAGE_COUNT = 4
 
 GAME_STATE_RAM = $3000
 GAME_OVER = GAME_STATE_RAM
+SCROLL_PENDING = GAME_STATE_RAM + 1
+BIRD_TARGET_Y = GAME_STATE_RAM + 2
+BIRD_STEP = GAME_STATE_RAM + 3
+BIRD_OLD_MASK = GAME_STATE_RAM + 4
+; Two bytes for the previous animation mask pointer.
+BIRD_CANDIDATE = GAME_STATE_RAM + $10
+; 72 candidate glyph bytes, followed by nine occupancy flags.
+BIRD_OCCUPIED = GAME_STATE_RAM + $58
+BIRD_UNDER_GLYPH = GAME_STATE_RAM + $61
+BIRD_UNDER_COLOR = GAME_STATE_RAM + $6a
+CELL_INDEX = GAME_STATE_RAM + $73
+BIRD_SHIFTED = GAME_STATE_RAM + $74
+; Three columns of sixteen horizontally shifted mask rows.
+BIRD_CACHE_SHIFT = GAME_STATE_RAM + $a4
+BIRD_CACHE_MASK = GAME_STATE_RAM + $a5
 OBSTACLE_BUFFER_RAM = $3100
 CHARSET_RAM = $3400
 CHARSET_SIZE = $0800
@@ -53,18 +69,9 @@ BIRD_VELOCITY = $11
 BIRD_PREV_ROW = $12
 BIRD_TOP_ROW = $13
 BIRD_ANIM_TIMER = $14
-BIRD_ROW_COUNTER = $15
 BIRD_SUB_Y = $16
 MASK_POINTER = $17
 ; MASK_POINTER + 1 = $18
-
-; Saved glyph/color pairs for the 3x2 cells the bird currently covers, so
-; clear_bird can restore whatever playfield content (sky or pipe) was there
-; instead of assuming sky.
-BIRD_UNDER_GLYPH = $19
-; BIRD_UNDER_GLYPH .. +5 = $19-$1e
-BIRD_UNDER_COLOR = $1f
-; BIRD_UNDER_COLOR .. +5 = $1f-$24
 
 ; Which text buffer the TED is showing, and which one the scroll fills.
 VISIBLE_SCREEN_HI = $25
@@ -86,15 +93,6 @@ CELL_COLOR = $32
 ; enough that the beam still paints the old matrix.
 FLIP_READY = $33
 
-; Snapshot of the third bird column, used only on frames where the
-; counter-shift spills into it. BIRD_WIDE is the shift amount just painted
-; (0 means the tail column was not placed). The four shift bytes are
-; scratch while render_bird composes one mask row.
-BIRD_UNDER_TAIL_GLYPH = $34
-; BIRD_UNDER_TAIL_GLYPH .. +2 = $34-$36
-BIRD_UNDER_TAIL_COLOR = $37
-; BIRD_UNDER_TAIL_COLOR .. +2 = $37-$39
-BIRD_WIDE = $3a
 BIRD_H_SHIFT = $3b
 BIRD_SHIFT_LEFT = $3c
 BIRD_SHIFT_RIGHT = $3d

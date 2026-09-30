@@ -74,8 +74,8 @@ vollstaendig dargestellt.
 - [ ] Neue Rohre nur beim Nachfuellen der rechten Weltspalte einplanen und
   daraus die sichtbaren Rohrzeichen erzeugen.
 - [x] Kollision vor dem Zeichnen gegen Rohre, Decke und Boden pruefen;
-  alle belegten Vogelzellen schuetzen, inklusive leerer Ueberlaufzeile.
-- [x] Bei Kollision das letzte gueltige Bild samt Scrollposition einfrieren;
+  nur sichtbare Vogelpixel beruecksichtigen, leere Vogelzeichen auslassen.
+- [x] Bei Kollision bis zum letzten freien Pixel zuruecksetzen und einfrieren;
   Neustart durch erneuten Tastendruck.
 - [ ] Punkte beim einmaligen Passieren eines Rohrs vergeben; HUD ohne
   Full-Screen-Redraw aktualisieren.
@@ -112,7 +112,7 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 | Dynamische Vogelglyphen zerstoeren benachbarte Grafik | Separaten, festen Zeichensatzbereich reservieren; nur dessen Bytes im Frame beschreiben. |
 | 16-KiB-RAM reicht nicht fuer Komfortpuffer | Der Text-Doppelpuffer ist der Scrollweg und endet vor `$2000`. Kein Bitmap-Doppelpuffer und keine Tilemap; Rohre bleiben Ringpuffer plus generierte Randspalte. |
 | Framebudget wird von Glyphen-Kopien ueberschritten | Nur geaenderte Vogelpose/Position neu zusammensetzen, Quellmasken kompakt halten und mit Rastermarker messen. |
-| Vogelzeichen ueberschreiben Umgebung | Die naechste belegte Zeichenflaeche vor dem Zeichnen pruefen; kleiner sichtbarer Sicherheitsabstand ist gewollt. |
+| Vogelzeichen ueberschreiben Umgebung | Kandidaten im Arbeits-RAM pruefen, bei Kontakt pixelweise zuruecksetzen und leere Vogelzeichen nicht zeichnen. |
 
 ## Reihenfolge
 

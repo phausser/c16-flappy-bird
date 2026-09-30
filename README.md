@@ -4,7 +4,9 @@ Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 
 The playfield is TED text mode: 38 visible columns, a 40-byte matrix, and
 one-pixel horizontal scroll. The next frame is built in a hidden text buffer
-and `$FF14` flips to it in the bottom border. Collision stops the round before bird cells overwrite the environment.
+and `$FF14` flips to it in the bottom border. Collision uses the visible bird
+pixels and stops at the last free pixel against solid pipe, ceiling and ground
+edges. Empty bird cells leave the environment and its colors untouched.
 Release and press Space again to restart. Scoring and a game-over overlay
 are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 
@@ -28,5 +30,6 @@ reaches the emulator.
 
 Collision regression tests execute the assembled code with py65 (install it
 in a Python virtual environment): `python tests/collision.py` after `make`.
-These cover all scroll phases, pipe edges, floor/ceiling, freeze and restart;
-TED raster timing still needs verification in VICE.
+These cover every pose and scroll phase, pixel contact, empty-cell rendering,
+animation near edges, freeze and restart. The tests emulate the CPU; use VICE
+for TED raster timing and visual checks.
