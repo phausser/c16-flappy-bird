@@ -5,18 +5,18 @@ INITIAL_SCROLL_OFFSET = 7
 ; Number of frames per column shift, and the pieces the hidden buffer is
 ; filled in. One piece per frame stays far shorter than the border.
 SCROLL_SLICE_COUNT = 8
-; PAL raster line in the lower border, after its color has been set at $F8.
+; PAL raster line in the lower border, after its color has been set at $CC.
 ; The scroll register and the buffer flip are stored here.
 RASTER_BORDER = $fc
-; Text begins at PAL raster $30; change the TED background at each 8-pixel
-; row boundary through row 22, where solid ground starts.
-BACKGROUND_GRADIENT_FIRST_RASTER = $30
+; TED raster-counter coordinates: active 25-row screen is $04..$CB.
+BACKGROUND_GRADIENT_FIRST_RASTER = $04
 ; Low nibble is TED color 13 (blue); bits 4-6 set luminance 0..7.
 BG_GRADIENT_HUE = $0d
 BG_GRADIENT_START_COLOR = BG_GRADIENT_HUE
-BACKGROUND_GRADIENT_BANDS = SCREEN_ROWS
-BACKGROUND_GRADIENT_LINES_PER_BAND = 8
-BACKGROUND_GRADIENT_TOP_RASTER = $00
+BACKGROUND_GRADIENT_LEVELS = 7
+; VICE normal PAL canvas starts at TED raster $113; active text starts at $04.
+BACKGROUND_GRADIENT_TOP_RASTER = $113
+BACKGROUND_GRADIENT_BOTTOM_RASTER = $cc
 FRAME_BOTTOM_COLOR = $59
 PIPE_RANDOM_SEED = $5d
 PIPE_RING_MASK = $3f

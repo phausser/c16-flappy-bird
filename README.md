@@ -9,7 +9,8 @@ pixels and stops at the last free pixel against solid pipe, ceiling and ground
 edges. Empty bird cells leave the environment and its colors untouched.
 The sky uses a blue luminance ramp. The top border is darkest blue, the side
 border ramps evenly to light blue, and the lower border uses color 9 at
-luminance 5. A TED raster IRQ sets these bands.
+luminance 5. A TED raster IRQ sets these bands; the active screen occupies
+TED raster-counter lines `$04` through `$CB`.
 Release and press Space again to restart. Scoring and a game-over overlay
 are still open; see `TODO.md`. The scroll timing is specified in `SPEC.md`.
 

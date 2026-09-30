@@ -210,12 +210,12 @@ reset/init
 ```
 
 `frame-sync` wartet auf genau ein PAL-Frame-Ereignis am unteren Rand. Fuer den
-Himmel setzt ein TED-Raster-IRQ an jeder Textzeilengrenze die naechste
-Helligkeitsstufe des blauen Verlaufs. Der obere Rahmen bleibt auf Luminanz 0;
-ab der ersten Bildschirmzeile steigt der Seitenrahmen gleichmaessig von
-Luminanz 1 bis 7. Der untere Rahmen verwendet TED-Farbe 9 mit Luminanz 5. Der
-Handler aktualisiert die Farben und den naechsten Rastervergleich;
-Spielberechnung und Bildschirmaufbau bleiben ausserhalb des IRQ.
+Sieben gleich hohe Rasterbaender teilen den aktiven Bildschirm in den blauen
+Luminanzen 1 bis 7. Hintergrund und Seitenrahmen wechseln bei jedem Schritt
+auf derselben Rasterzeile. Der obere Rahmen bleibt bis zum Bildschirmbeginn
+auf Luminanz 0; am Beginn des unteren Rahmens wechseln Hintergrund und Rahmen
+auf TED-Farbe 9 mit Luminanz 5. Spielberechnung und Bildschirmaufbau bleiben
+ausserhalb des IRQ.
 
 Vorgesehene Quelldateien:
 
