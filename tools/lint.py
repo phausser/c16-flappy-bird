@@ -26,9 +26,9 @@ ror rti rts sbc sec sed sei sta stx sty tax tay tsx txa txs tya
 # no symbolic use.
 ENTRY_POINTS = {'start'}
 
-IDENT = re.compile(r'[A-Za-z_][A-Za-z0-9_]*')
-DEFINE = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$')
-LABEL = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)(\s|$)')
+IDENT = re.compile(r'[A-Za-z_]\w*')
+DEFINE = re.compile(r'^([A-Za-z_]\w*)\s*=\s*(.*?)$')
+LABEL = re.compile(r'^([A-Za-z_]\w*)(\s|$)')
 
 errors = []
 
