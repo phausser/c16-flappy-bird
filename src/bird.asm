@@ -44,25 +44,6 @@ update_bird_position:
     adc BIRD_VELOCITY
     sta BIRD_Y_POSITION
 
-; Clamp to the playfield so the sprite (plus its overflow row) never reaches
-; the ground rows or wraps past the top. Hitting a bound also zeroes the
-; velocity, standing in for a floor/ceiling until real collision exists.
-    cmp #BIRD_Y_MAX + 1
-    bcc clamp_done
-    bit BIRD_VELOCITY
-    bmi clamp_top
-    lda #BIRD_Y_MAX
-    sta BIRD_Y_POSITION
-    jmp clamp_stop_velocity
-clamp_top:
-    lda #BIRD_Y_MIN
-    sta BIRD_Y_POSITION
-clamp_stop_velocity:
-    lda #0
-    sta BIRD_Y_FRACTION
-    sta BIRD_VELOCITY
-    sta BIRD_VELOCITY_FRACTION
-clamp_done:
     rts
 
 ; Restores whatever playfield content (sky or pipe) the bird's previous cell

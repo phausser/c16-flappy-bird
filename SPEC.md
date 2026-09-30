@@ -113,7 +113,7 @@ drei Spalten mal drei Zeilen.
    Leere Bits zeigen die Hintergrundfarbe; eine Zelle hat nur eine
    Vordergrundfarbe.
 
-So bleibt die Kollisionsbox unabhaengig vom Zeichenraster. Der Vogel bewegt
+Die Kollisionsflaeche umfasst die belegten Zeichenzellen. Der Vogel bewegt
 sich vertikal ohne Acht-Pixel-Spruenge und horizontal ohne den Sieben-Pixel-
 Ruck des Feinscrolls. Die Fluegelanimation wechselt zeitbasiert zwischen drei
 Quellmasken; Fallgeschwindigkeit waehlt zusaetzlich eine aufgerichtete oder
@@ -147,10 +147,17 @@ vollstaendige Tilemap. Jedes Hindernis umfasst mindestens:
 - obere und untere Kante der Luecke in Pixeln,
 - einmalig vergebene Punktwertung.
 
-Kollision verwendet die physikalische, achsenparallele Vogelbox gegen die
-Rohrrechtecke in Pixelkoordinaten. Grafikzeichen sind nie die
-Kollisionswahrheit. Die Trefferbox ist bewusst etwas kleiner als die
-Vogelmaske und wird mit Konstanten dokumentiert, damit das Spiel fair bleibt.
+Kollision prueft die naechste Y-Position und Scrollphase vor jeder sichtbaren
+Aenderung. Die gesamte vom Renderer belegte Flaeche (drei Zeilen, zwei oder
+drei Spalten) muss frei sein, auch wenn einzelne Vogelglyphen leer sind.
+Dadurch bleibt ein kleiner sichtbarer Sicherheitsabstand; Grafikmischung
+und Farbkollisionen werden vermieden. Beim Scrollumbruch entsprechen die
+naechsten Vogelspalten 12-13 den aktuellen Spalten 13-14.
+
+Bei einem Treffer bleiben Vogelbild und Scrollposition unveraendert stehen.
+Eine neue Leertastenflanke startet die Runde neu. Die aktuelle Implementierung
+prueft die sichtbare Textmatrix; vorhandene Vogelzeichen gelten als Himmel,
+da nur auf zuvor gepruefte freie Zellen gezeichnet wird.
 
 ## Laufzeitarchitektur
 
@@ -163,9 +170,10 @@ reset/init
   -> frame loop
        frame-sync auf der aufsteigenden Flanke von Raster $F0
        input
+       physics (Kandidatenposition)
+       collision -> bei Treffer letztes Bild behalten, game-over
        bisheriges Vogelbild loeschen
-       physics
-       obstacle generation / scoring / collision   (ab Meilenstein 3)
+       obstacle generation / scoring               (noch offen)
        $FF07 schreiben, beim Umbruch auch $FF14
        ein Teilstueck in den versteckten Puffer kopieren
        Vogel auf den sichtbaren Puffer zeichnen

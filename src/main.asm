@@ -20,6 +20,10 @@ basic_end:
 ; unpredictable points, which is a likely source of intermittent corruption.
 start:
     sei
+    jsr initialise_input
+restart_round:
+    lda #0
+    sta GAME_OVER
     jsr initialise_video
     jsr render_playfield
     ; The hidden buffer must already match the playfield before the bird is
@@ -27,17 +31,40 @@ start:
     jsr mirror_playfield_to_back
     jsr prime_back_buffer
     jsr initialise_bird
-    jsr initialise_input
 
 main_loop:
     jsr wait_for_frame
     jsr read_input
-    jsr clear_bird
+    lda GAME_OVER
+    beq play_frame
+    lda FLAP_PRESSED
+    bne restart_round
+    jmp main_loop
+play_frame:
+    lda BIRD_Y_POSITION
+    pha
+    lda BIRD_Y_FRACTION
+    pha
     jsr update_bird_physics
+    jsr check_bird_collision
+    bcs stop_round
+    pla
+    pla
+    jsr clear_bird
     jsr advance_scroll
     jsr render_bird
     jmp main_loop
 
+stop_round:
+    pla
+    sta BIRD_Y_FRACTION
+    pla
+    sta BIRD_Y_POSITION
+    lda #1
+    sta GAME_OVER
+    jmp main_loop
+
+!source "src/collision.asm"
 !source "src/video.asm"
 !source "src/render.asm"
 !source "src/bird.asm"
