@@ -1,6 +1,6 @@
 """Score placement, one point per pipe, and the unmoving floor row.
 
-Run after `make`. The collision cadence assertion is a separate, known gap.
+Run after `make`.
 """
 import re
 from pathlib import Path
@@ -53,6 +53,17 @@ def score_cells(value):
     for offset, char in enumerate(digits):
         glyphs[start + offset] = SYMBOLS['GLYPH_DIGIT_0'] + int(char)
         inks[start + offset] = SYMBOLS['TED_SCORE_COLOR']
+    title = 'PRESS SPACE' if cpu.memory[SYMBOLS['GAME_OVER']] else 'FLAPPY BIRD'
+    if not cpu.memory[SYMBOLS['GAME_OVER']] or not cpu.memory[SYMBOLS['HUD_BLINK']]:
+        for col, char in enumerate(title, 1):
+            glyphs[col] = 0 if char == ' ' else SYMBOLS['GLYPH_LETTER_A'] + ord(char) - ord('A')
+            inks[col] = SYMBOLS['TED_SCORE_COLOR']
+    high = cpu.memory[SYMBOLS['HIGH_SCORE']] | (cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8)
+    label = 'HI ' + str(high)
+    for col, char in enumerate(label, 39 - len(label)):
+        glyphs[col] = (0 if char == ' ' else SYMBOLS['GLYPH_DIGIT_0'] + int(char)
+                       if char.isdigit() else SYMBOLS['GLYPH_LETTER_A'] + ord(char) - ord('A'))
+        inks[col] = 0 if char == ' ' else SYMBOLS['TED_SCORE_COLOR']
     return glyphs, inks
 
 
@@ -109,7 +120,13 @@ for _ in range(24):
 scored = []
 previous = 0
 for _ in range(40):
+    footer_before = row(0x0c00), row(0x1c00)
     call('swap_buffers')
+    assert (row(0x0c00), row(0x1c00)) == footer_before, 'flip drew the footer'
+    if score_value() != previous:
+        assert get('HUD_DIRTY') == 1
+    call('refresh_footer')
+    assert get('HUD_DIRTY') == 0
     current = score_value()
     if current != previous:
         scored.append(get('WORLD_COLUMN'))
@@ -155,3 +172,40 @@ else:
 assert score_value() == 0
 expect_score(0)
 print('restart paints 0 in both buffers', flush=True)
+
+# Best score survives a round restart; the title returns immediately.
+put('HIGH_SCORE', 65)
+cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] = 1  # 321
+put('GAME_OVER', 1)
+put('HUD_BLINK', 0)
+put('HUD_TIMER', 0)
+call('render_score')
+expect_score(0)
+visible = row(0x0c00)
+for _ in range(24):
+    call('update_footer_blink')
+assert row(0x0c00) == visible
+call('update_footer_blink')
+expect_score(0)
+assert row(0x0c00)[1:12] == bytes(11)
+assert row(0x0c00)[12:] == visible[12:]
+for _ in range(25):
+    call('update_footer_blink')
+assert row(0x0c00) == visible
+put('FLAP_PRESSED', 1)
+cpu.pc = SYMBOLS['main_loop']
+cpu.step()
+for _ in range(300000):
+    if cpu.pc == SYMBOLS['main_loop']:
+        break
+    cpu.step()
+else:
+    raise AssertionError('round restart did not finish')
+assert get('GAME_OVER') == get('HUD_BLINK') == get('HUD_TIMER') == 0
+assert cpu.memory[SYMBOLS['HIGH_SCORE']] | cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8 == 321
+expect_score(0)
+set_score(322)
+call('render_score')
+assert cpu.memory[SYMBOLS['HIGH_SCORE']] | cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8 == 322
+expect_score(322)
+print('title, right-aligned best score, 25-frame blinking and round persistence passed')

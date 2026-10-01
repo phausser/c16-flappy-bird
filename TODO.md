@@ -30,18 +30,19 @@ zaehlt exakt sichtbar mit PAL-Frame-Tempo.
 
 ## Meilenstein 1 -- Feinscroll-Prototyp
 
-- [x] Einen Spielbereich mit Himmel und Rohren ueber alle 25 Zeilen rendern.
+- [x] Einen Spielbereich mit Himmel und Rohren ueber Zeilen 0-23 rendern;
+  Zeile 24 bleibt fuer Boden und HUD fest.
   Sichtbar sind 38 Spalten; die Matrix bleibt 40 Byte breit, Spalten 0 und
   39 liegen unter dem Rand.
-- [x] Einen senkrechten Blau-Verlauf, abgestuften Seitenrahmen und festen
+- [x] Einen konfigurierbaren senkrechten Helligkeitsverlauf, abgestuften Seitenrahmen und festen
   unteren Rahmen mit Raster-IRQ setzen.
 - [x] TED-Horizontalfeinscroll fuer alle acht Ein-Pixel-Offsets isoliert
   implementieren und Richtung/Maskierung mit einem sichtbaren Marker pruefen.
 - [x] Die naechste Spalte im versteckten Textpuffer vorbereiten und `$FF14`
   erst im unteren Rand kippen. Acht Teilstuecke pro Umbruch, keine
   Vollbild-Redraws im Frame.
-- [x] Zeichenboden und reservierte HUD-Zeile entfernen; Rohre bis zu beiden
-  Spielfeldkanten ziehen und alle 25 Zeichen-/Farbzeilen mitscrollen.
+- [x] Rohre bis zur oberen Spielfeldkante ziehen; Zeilen 0-23 scrollen,
+  Zeile 24 als feste Boden-/HUD-Zeile darstellen.
 - [x] Obere Rasterfarbkante mit Rohranfang bei PAL-Zeile `$34` ausrichten;
   eigenen Handler vor dem ersten Zeichenfetch verwenden.
 - [x] Einen Messrahmen oder Debugzaehler einbauen, um fehlende/doppelte
@@ -94,8 +95,8 @@ vergeben.
 
 ## Meilenstein 4 -- Feinschliff und Stabilitaet
 
-- [x] Dreifarbige Multicolor-Rohre nach `assets/pipe.png`, vorerst ohne
-  Abschlusskappen; Hires-Vogel und Rasterhimmel beibehalten.
+- [x] Dreifarbige Multicolor-Rohre nach `assets/pipe.png` mit acht Pixel
+  hohen Abschlusskappen; Hires-Vogel und Rasterhimmel beibehalten.
 - [ ] Farben und Vogelposen fuer klare Lesbarkeit
   abstimmen.
 - [ ] Schwierigkeit langsam an Punktzahl koppeln, ohne unmoegliche
@@ -106,7 +107,7 @@ vergeben.
   Speicherueberlauf oder Frame-Aussetzer ausfuehren.
 - [ ] Kaltstart, Neustart, lange Punktzahl und wiederholte Kollisionen
   pruefen.
-- [ ] Build-/Startanleitung im `README.md` ergaenzen und die finale PRG
+- [x] Build-/Startanleitung im `README.md` ergaenzen und die finale PRG
   erzeugen.
 
 **Abnahme:** Der Release-Build laeuft auf der PAL-C16-Konfiguration aus VICE
@@ -114,18 +115,20 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 
 ## Aktueller Pruefstand und offene Regressionen
 
-- [x] 1.024 Pufferwechsel und 3.000 automatische Spielframes ohne Zeichenboden.
-- [x] 79.872 Pixelkollisions- und 3.424 Render-/Restore-Faelle bestanden.
-- [x] Untere Spielfeldkante bei 192 Pixeln fuer die vier bisher getesteten
+- [x] 1.024 Pufferwechsel und 3.000 automatische Spielframes mit fester HUD-Zeile.
+- [x] 119.808 Pixelkollisions- und 4.616 Render-/Restore-Faelle bestanden.
+- [x] Untere Spielfeldkante bei 192 Pixeln fuer alle sechs getesteten
   Posen und alle acht Scrollphasen verifiziert. Die Bodenzeile ist Kollision.
 - [x] IRQ-Register, Stack, Vektorwechsel, Neustart und 9-Bit-Rasterfolge geprueft.
 - [x] 3.874 Farbzugriffe der Multicolor-Fassung mit buendiger Oberkante in VICE im erlaubten Zeitfenster.
-- [ ] `tests/collision.py` auf sechs statt vier GIF-Frames erweitern; die
-  bestehende Kadenz-Assertion bricht derzeit ab. Danach auch die dahinter
-  liegenden Kontakt-, Freeze- und Neustarttests vollstaendig ausfuehren.
+- [x] Kollisionsorakel und Kadenztest auf alle sechs GIF-Frames erweitern;
+  Kontakt-, Freeze- und Neustarttests bestehen.
+- [ ] Neuen VICE-Rastertrace fuer aktuelle Farben, Abstaende und HUD-Timing aufzeichnen.
 - [ ] Neue Rasterroutine auf echter PAL-C16-Hardware pruefen.
-- [x] HUD-Layout: die letzte Zeichenzeile ist Boden und zentrierte Punktzahl,
-  ohne eine leere obere Rohrzeile.
+- [x] HUD: FLAPPY BIRD links, Score mittig, HI mit Sitzungsbestwert rechts.
+- [x] PRESS SPACE blinkt bei Game-over; Bestwert ueberlebt Rundenneustart.
+- [x] HUD-Ausgabe nach Scroll-/Vogel-Ausgabe verschieben, damit Punkteereignisse
+  den zeitkritischen Pufferwechsel nicht verzoegern.
 
 ## Technische Risiken und Entscheidungen
 

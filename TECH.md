@@ -6,7 +6,12 @@ hidden text buffer and `$FF14` flips to it in the bottom border. Collision
 uses the visible bird pixels and stops at the last free pixel against solid
 pipes, the top edge (pixel 0) and the floor row (pixel 192). Pipes use rows
 0-23. Row 24 is a fixed floor in the lower-border color and shows the score,
-centered, without scrolling. Empty bird cells leave the environment and its
+centered, without scrolling. “FLAPPY BIRD” sits on the left and “HI” plus
+the session's best score on the right. On game over, “PRESS SPACE” replaces
+the title and alternates visible/hidden every 25 PAL frames. The best score
+survives round restarts and resets when the program starts. The lettering
+uses the digits' five-pixel height and two-pixel strokes.
+Empty bird cells leave the environment and its
 colors untouched.
 
 The pipes use the exact 24-pixel stripe layout from
@@ -14,9 +19,11 @@ The pipes use the exact 24-pixel stripe layout from
 beside the gap; the remaining stripe pattern repeats along the bodies.
 Three multicolor glyphs provide yellow highlights (`$77`), green (`$55`) and
 dark green (`$25`) using the TED palette. The bird remains hires; its TED
-color is set by `TED_BIRD_COLOR` in `src/hardware.inc`. The sky uses a blue
-luminance ramp. The top border is darkest blue, the side border ramps evenly
-to light blue, and color 9 at luminance 5 covers the floor row plus the lower
+color is set by `TED_BIRD_COLOR` in `src/hardware.inc`. The sky hue is set by
+`BACKGROUND_GRADIENT_COLOR` (currently TED color 6), with luminance 1–7.
+The upper border uses luminance 0. Band spacing is set by
+`BACKGROUND_GRADIENT_DISTANCE` (currently 28 lines). Color 9 at luminance 6
+covers the floor row plus the lower
 border, starting at TED line `$C4`. That same IRQ sets horizontal scroll to 0
 for the score row only; the game loop restores the playfield scroll at line
 `$FC`. The active screen occupies TED raster-counter lines `$04` through
@@ -25,12 +32,15 @@ directly with `RTI`. It prepares each color in advance, normally enters one
 line before the boundary, and uses `$FF1E` to place both color writes in the
 horizontal blank. The first band starts exactly with character row 0 at TED
 line `$04` (PAL picture line `$34`): its separate handler enters two lines
-early and writes after the line-3 character fetch. Other band edges avoid
-fetch pairs. This timing targets PAL with vertical scroll 3.
+early and writes after the line-3 character fetch. Changes to band spacing require a fresh check of fetch pairs and blank
+windows in VICE. This timing targets PAL with vertical scroll 3.
 
 Each pipe passed scores one point. The pipe that ends the run does not.
-Release and press Space again to restart from 0. Best score and a title
-screen are still open; see [TODO.md](TODO.md). The scroll timing is specified
+Release and press Space again to restart from 0. A separate title screen
+is still open; see [TODO.md](TODO.md). Score changes set `HUD_DIRTY` during
+the buffer flip; the footer is refreshed after scroll copying and bird
+rendering. This keeps the approximately 1.92-second scoring events from
+delaying the time-critical top-row updates. The scroll timing is specified
 in [SPEC.md](SPEC.md).
 
 ## Pages build
@@ -70,17 +80,16 @@ wraparound and an automated flight through changing gaps.
 
 ## Current validation and remaining work
 
-The full-height playfield passed 1,024 buffer flips, 3,000 automated gameplay
-frames, 79,872 pixel collision cases and 3,064 render/restore cases. All four
-poses currently covered by the collision oracle stop at pixel 191, on the
-score row. The multicolor raster build passed 3,874 color-store checks in
-VICE, plus IRQ register, stack, vector, 9-bit compare and restart checks.
+The current CPU regression suite passed 1,024 buffer flips, 3,000 automated
+gameplay frames, 119,808 pixel collision cases and 4,616 render/restore cases.
+All six poses stop at pixel 191. Tests cover animation cadence, contact,
+freeze, restart, the session best score, footer alignment, 25-frame blinking
+and deferred footer writes. IRQ register, stack, vector, 9-bit compare and
+restart checks pass.
 
-`tests/collision.py` still stops at its existing animation-cadence assertion:
-it assumes four frames, while the imported asset contains six. Tests after
-that assertion are not reached by a normal run. Updating the animation
-oracle and validating all six poses remains open in [TODO.md](TODO.md).
-The latest raster changes have not been verified on physical C16 hardware.
+An earlier raster build passed 3,874 color-store checks in VICE. That result
+does not validate the latest configurable colors, spacing or footer timing.
+A fresh VICE trace, five-minute visual run and physical C16 check remain open.
 
 To reproduce the raster trace after `make`, create a monitor command file:
 

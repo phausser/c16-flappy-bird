@@ -82,6 +82,17 @@ def score_cells(value):
     for offset, char in enumerate(digits):
         glyphs[start + offset] = S['GLYPH_DIGIT_0'] + int(char)
         inks[start + offset] = S['TED_SCORE_COLOR']
+    title = 'PRESS SPACE' if cpu.memory[S['GAME_OVER']] else 'FLAPPY BIRD'
+    if not cpu.memory[S['GAME_OVER']] or not cpu.memory[S['HUD_BLINK']]:
+        for col, char in enumerate(title, 1):
+            glyphs[col] = 0 if char == ' ' else S['GLYPH_LETTER_A'] + ord(char) - ord('A')
+            inks[col] = S['TED_SCORE_COLOR']
+    high = cpu.memory[S['HIGH_SCORE']] | (cpu.memory[S['HIGH_SCORE'] + 1] << 8)
+    label = 'HI ' + str(high)
+    for col, char in enumerate(label, 39 - len(label)):
+        glyphs[col] = (0 if char == ' ' else S['GLYPH_DIGIT_0'] + int(char)
+                       if char.isdigit() else S['GLYPH_LETTER_A'] + ord(char) - ord('A'))
+        inks[col] = 0 if char == ' ' else S['TED_SCORE_COLOR']
     return glyphs, inks
 
 
@@ -132,6 +143,7 @@ call('prime_back_buffer')
 check_buffer(0, 0xc00, 0x800)
 for frame in range(1024 * 8):
     call('advance_scroll')
+    call('refresh_footer')
     world = (frame + 1) // 8
     if get('SCROLL_OFFSET') == 0:
         check_buffer(world + 1, get('BACK_SCREEN_HI') << 8, get('BACK_COLOR_HI') << 8)

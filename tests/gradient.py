@@ -13,8 +13,13 @@ from py65.devices.mpu6502 import MPU
 ROOT = Path(__file__).resolve().parents[1]
 S = {n: int(v, 16) for n, v in re.findall(r'^\s*(\w+)\s*=\s*\$([0-9a-f]+)',
                                         (ROOT / 'build/flappy.sym').read_text(), re.M)}
-COLORS = [0x1d, 0x2d, 0x3d, 0x4d, 0x5d, 0x6d, 0x7d, 0x59, 0x0d]
-LINES = [4, 33, 62, 90, 118, 145, 175, 196, 275]
+COLORS = [(level << 4) + S['BACKGROUND_GRADIENT_COLOR']
+          for level in range(1, S['BACKGROUND_GRADIENT_LEVELS'] + 1)]
+COLORS += [S['FRAME_BOTTOM_COLOR'], S['BG_GRADIENT_START_COLOR']]
+LINES = [S['BACKGROUND_GRADIENT_FIRST_RASTER']]
+LINES += [level * S['BACKGROUND_GRADIENT_DISTANCE'] + 1
+          for level in range(1, S['BACKGROUND_GRADIENT_LEVELS'])]
+LINES += [S['BACKGROUND_GRADIENT_BOTTOM_RASTER'], S['BACKGROUND_GRADIENT_TOP_RASTER']]
 
 
 class Memory(list):

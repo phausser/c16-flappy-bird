@@ -9,7 +9,7 @@ initialise_background_gradient:
     sta TED_RAM_ENABLE
     lda #0
     sta BACKGROUND_GRADIENT_INDEX
-    lda #$1d
+    lda background_gradient_colors
     sta gradient_color + 1
     lda #BACKGROUND_GRADIENT_FIRST_RASTER - 2
     sta TED_RASTER_COMPARE
@@ -57,7 +57,7 @@ background_gradient_top_irq:
     sta TED_IRQ_STATUS
     txa
     pha
-    ldx #$1d
+    ldx gradient_color + 1
 ; Use separate thresholds: enter the blank at $B0, accept the post-fetch
 ; sample below $BC. Reusing $B0 can miss a late read and skip a whole line.
 gradient_top_wrap:
@@ -120,7 +120,7 @@ background_gradient_floor_irq:
     sta TED_IRQ_STATUS
     txa
     pha
-    ldx #FRAME_BOTTOM_COLOR
+    ldx gradient_color + 1
 gradient_floor_wrap:
     lda TED_RASTER_HORIZONTAL
     cmp #$b0
@@ -143,10 +143,22 @@ gradient_floor_scroll_store:
 ; Band edges are shifted at most two lines to avoid the fetch pairs.
 ; Horizontal timing assumes PAL, vertical scroll 3 and normal TED speed.
 background_gradient_colors:
-    !byte $1d, $2d, $3d, $4d, $5d, $6d, $7d
+    !byte (1 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (2 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (3 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (4 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (5 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (6 << 4) + BACKGROUND_GRADIENT_COLOR
+    !byte (7 << 4) + BACKGROUND_GRADIENT_COLOR
     !byte FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
 background_gradient_rasters:
-    !byte BACKGROUND_GRADIENT_FIRST_RASTER - 2, $20, $3d, $59, $75, $90, $ae
+    !byte BACKGROUND_GRADIENT_FIRST_RASTER - 2
+    !byte 1 * BACKGROUND_GRADIENT_DISTANCE
+    !byte 2 * BACKGROUND_GRADIENT_DISTANCE
+    !byte 3 * BACKGROUND_GRADIENT_DISTANCE
+    !byte 4 * BACKGROUND_GRADIENT_DISTANCE
+    !byte 5 * BACKGROUND_GRADIENT_DISTANCE
+    !byte 6 * BACKGROUND_GRADIENT_DISTANCE
     !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 2), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
 background_gradient_high:
     !fill BACKGROUND_GRADIENT_LEVELS, 2

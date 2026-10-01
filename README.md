@@ -4,7 +4,9 @@
 
 Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 Space flaps. Each pipe you clear scores one point. Release Space and press
-it again to restart.
+it again to restart. The fixed bottom row shows FLAPPY BIRD, the current
+score and HI with the best score of the session. On game over, PRESS SPACE
+blinks on the left. The best score survives round restarts.
 
 Play it in the browser: https://phausser.github.io/c16-flappy-bird/
 
@@ -19,7 +21,20 @@ make run       # start it in VICE as a PAL C16
 make lint      # build, then check style, names and zero-page addresses
 ```
 
+The game fits in 16 KiB RAM and uses all six bird animation frames plus
+pipe end caps from the supplied assets.
+
 Scroll, collision, pipes, tests and the raster trace are in [TECH.md](TECH.md).
+Implementation requirements are in [SPEC.md](SPEC.md), remaining work in
+[TODO.md](TODO.md). CPU regression tests require `py65` in a Python virtual
+environment; rebuilding the bird masks also requires Pillow.
+
+```sh
+python tests/score.py
+python tests/obstacles.py
+python tests/collision.py
+python tests/gradient.py
+```
 
 ## License
 

@@ -26,7 +26,8 @@ kein Ziel des ersten Meilensteins.
 
 Aktuell umgesetzt sind SPACE-Steuerung, Scrollen, Rohrfolge, Pixelkollision,
 Einfrieren, Neustart und ein Punkt pro geschafftem Rohr in der festen
-Bodenzeile. FIRE, Bestwert, Titelbild und steigende Schwierigkeit sind noch
+Bodenzeile, Sitzungsbestwert und blinkender Neustarthinweis. FIRE, Titelbild
+und steigende Schwierigkeit sind noch
 offen; siehe `TODO.md`.
 
 ## Zielplattform und Werkzeugkette
@@ -149,7 +150,7 @@ Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 
 ### Farben und Animation
 
-Die aktuelle Fassung nutzt einen blauen Helligkeitsverlauf, gruene Rohre
+Die aktuelle Fassung nutzt einen konfigurierbaren Helligkeitsverlauf, gruene Rohre
 und einen konfigurierbaren Vogel. Seine aktuelle Farbe kommt aus
 TED_BIRD_COLOR in src/hardware.inc. Folgende optionale Effekte sind noch offen.
 Das Himmel-/Rohr-Schema arbeitet mit
@@ -241,16 +242,17 @@ reset/init
        $FF07 schreiben, beim Umbruch auch $FF14
        ein Teilstueck in den versteckten Puffer kopieren
        Vogel auf den sichtbaren Puffer zeichnen
+       vorgemerkte HUD-Aktualisierung ausfuehren
   -> game-over
   -> neuer Lauf bei erneuter SPACE-Flanke
 ```
 
 `frame-sync` wartet auf genau ein PAL-Frame-Ereignis am unteren Rand.
-Sieben nahezu gleich hohe Rasterbaender teilen den aktiven Bildschirm in den blauen
+Sieben Rasterbaender teilen den aktiven Bildschirm mit konfigurierbarer Grundfarbe in die
 Luminanzen 1 bis 7. Hintergrund und Seitenrahmen wechseln bei jedem Schritt
 auf derselben Rasterzeile. Der obere Rahmen bleibt bis zum Bildschirmbeginn
 auf Luminanz 0; am Beginn des unteren Rahmens wechseln Hintergrund und Rahmen
-auf TED-Farbe 9 mit Luminanz 5. Spielberechnung und Bildschirmaufbau bleiben
+auf TED-Farbe 9 mit Luminanz 6. Spielberechnung und Bildschirmaufbau bleiben
 ausserhalb des IRQ.
 
 ### Raster-IRQ und buendige Oberkante
@@ -262,8 +264,10 @@ Es gibt keinen Ruecksprung in den KERNAL. `$FF09` wird am Eintritt quittiert,
 Farbe, naechste IRQ-Adresse und kompletter 9-Bit-Vergleich werden im vorigen
 IRQ vorbereitet. `$FF0A` aktiviert nur den Raster-IRQ samt Vergleichsbit 8.
 
-Die sichtbaren Farbgrenzen liegen im TED-Zaehler bei `$04`, `$21`, `$3E`,
-`$5A`, `$76`, `$91`, `$AF`, `$C4` und `$113`. Die erste Grenze entspricht
+Die Rastervergleichswerte stehen in `background_gradient_rasters`: erste
+Zeile minus zwei, sechs Vielfache von `BACKGROUND_GRADIENT_DISTANCE`
+(aktuell 28), Boden minus zwei und oberer Rand minus eins. Die Farben kommen
+aus `background_gradient_colors`, auch fuer Oberkante und Boden. Die erste Grenze entspricht
 PAL-Bildzeile `$34` und der ersten Rohrzeile. Der obere Rahmen behaelt bis
 dorthin Luminanz 0. Ab `$C4`, der ersten Rasterzeile von Zeichenzeile 24,
 tragen Hintergrund und Rahmen die Bodenfarbe. Dieselbe IRQ setzt `$FF07`
@@ -276,8 +280,8 @@ eigenen Handler: IRQ auf TED-Zeile `$02`, Warten ueber deren rechten Rand,
 dann Farbzugriffe nach dem Zeichenfetch in Zeile `$03`. So liegen beide
 Schreibzugriffe vor dem sichtbaren Beginn von Zeile `$04`. Getrennte
 horizontale Schwellwerte (`$B0` beim Eintritt, `$BC` nach dem Fetch)
-verhindern, dass ein spaeter Lesezyklus eine ganze Zeile ueberspringt. Die uebrigen
-Bandgrenzen vermeiden Zeichenfetch-Paare. Voraussetzung ist PAL mit
+verhindern, dass ein spaeter Lesezyklus eine ganze Zeile ueberspringt. Bei geaenderten Rasterabstaenden muessen Zeichenfetch-Paare und sichtbare
+Zeitfenster erneut in VICE geprueft werden. Voraussetzung ist PAL mit
 Vertikalscroll 3 und normaler TED-Taktumschaltung. Kein Warten auf `$FF1D`
 im IRQ; die Spielschleife bleibt ausserhalb des Handlers.
 
@@ -296,7 +300,7 @@ Quelldateien:
 | `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
 | `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
 | `src/render.asm` | Rohrspalten und Spielfeld |
-| `src/score.asm` | Punkt zaehlen, Ziffern zentrieren, beide Puffer schreiben |
+| `src/score.asm` | Punkte und Sitzungsbestwert, HUD-Text, Blinken, beide Puffer schreiben |
 | `src/obstacles.asm` | Reproduzierbare Rohrfolge und Spaltenringpuffer |
 
 ## RAM- und Performance-Budget
@@ -338,15 +342,19 @@ Ausfuehrungszeit sichtbar.
 
 ## Aktueller Pruefstand
 
-Build und Lint bestehen. Der Stand ohne Zeichenboden bestand 1.024
-Pufferwechsel, 3.000 automatische Spielframes, 79.872 Pixelkollisions- und
-3.424 Render-/Restore-Faelle. Der neue untere Rand wurde fuer alle vier
-bisher im Kollisionsorakel enthaltenen Posen und acht Scrollphasen geprueft.
-Die Multicolor-Fassung bestand den IRQ-Regressionstest und 3.874 gemessene
-Farbzugriffe in VICE ohne Verletzung der sichtbaren Zeitfenster.
+Build und Lint bestehen. Die CPU-Tests bestanden 1.024 Pufferwechsel,
+3.000 automatische Spielframes, 119.808 Pixelkollisions- und 4.616
+Render-/Restore-Faelle fuer alle sechs Posen. Kontakt, Freeze, Neustart,
+Animationskadenz und IRQ-Zustand sind geprueft. HUD-Tests pruefen Ausrichtung,
+Sitzungsbestwert, Blinken und das Verschieben der HUD-Ausgabe hinter den
+zeitkritischen Pufferwechsel.
 
-Der bestehende Animationstest nimmt vier statt der sechs importierten
-GIF-Frames an und bricht deshalb ab; nachfolgende Tests laufen im normalen
-Aufruf nicht. Die Erweiterung auf sechs Posen bleibt offen. Ein erneuter
-Fuenf-Minuten-Dauerlauf des neuesten Stands und echte C16-Hardwaretests
-stehen aus. Reproduzierbare Test- und Tracebefehle stehen in `TECH.md`.
+Die untere Zeile zeigt links FLAPPY BIRD, mittig den aktuellen Score und
+rechts HI mit dem Bestwert. Bei Game-over blinkt links PRESS SPACE mit
+25 PAL-Frames pro Phase. Der Bestwert bleibt bei Rundenneustart bestehen
+und wird beim Programmstart geloescht. Buchstaben verwenden die gleiche
+Fuenf-Pixel-Hoehe und Zwei-Pixel-Strichstaerke wie die Ziffern.
+
+Eine fruehere Multicolor-Fassung bestand 3.874 Farbzugriffe in VICE. Ein
+neuer Rastertrace und Fuenf-Minuten-Dauerlauf des aktuellen Stands sowie
+echte C16-Hardwaretests stehen aus. Testbefehle stehen in `TECH.md`.

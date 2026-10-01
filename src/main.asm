@@ -19,12 +19,18 @@ basic_end:
 start:
     sei
     jsr initialise_input
+    lda #0
+    sta HIGH_SCORE
+    sta HIGH_SCORE + 1
 restart_round:
     sei
     lda #0
     sta GAME_OVER
     sta SCORE
     sta SCORE + 1
+    sta HUD_BLINK
+    sta HUD_TIMER
+    sta HUD_DIRTY
     jsr initialise_video
     jsr initialise_obstacles
     jsr render_playfield
@@ -45,9 +51,14 @@ main_loop:
     ; scroll or the next frame would be stuck there, score row included.
     jsr wait_for_frame
     jsr commit_scroll_offset
+    jsr update_footer_blink
     jmp main_loop
 play_frame:
     jsr prepare_bird_frame
+    lda GAME_OVER
+    beq footer_ready
+    jsr render_score
+footer_ready:
     ; All trial positions are resolved before the border. Only the accepted
     ; frame changes live glyphs, screen RAM and TED registers.
     jsr wait_for_frame
@@ -60,6 +71,7 @@ hold_scroll:
     jsr commit_scroll_offset
 draw_accepted_bird:
     jsr render_bird
+    jsr refresh_footer
     jmp main_loop
 
 !source "src/collision.asm"
@@ -124,4 +136,31 @@ digit_glyphs:
     !byte $bb, $dd, $dd, $dd, $dd, $dd, $dd, $bb
     !byte $ea, $7f, $7f, $7f, $7f, $7f, $7f, $ea
     !byte $aa, $ba, $ba, $ba, $ba, $ba, $ba, $aa
+; A-Z: five-pixel-high lettering with the digits' two-pixel strokes.
+    !byte $00, $00, $00, $18, $66, $7e, $66, $66 ; A
+    !byte $00, $00, $00, $78, $66, $78, $66, $78 ; B
+    !byte $00, $00, $00, $1e, $60, $60, $60, $1e ; C
+    !byte $00, $00, $00, $78, $66, $66, $66, $78 ; D
+    !byte $00, $00, $00, $7e, $60, $78, $60, $7e ; E
+    !byte $00, $00, $00, $7e, $60, $78, $60, $60 ; F
+    !byte $00, $00, $00, $1e, $60, $66, $66, $1e ; G
+    !byte $00, $00, $00, $66, $66, $7e, $66, $66 ; H
+    !byte $00, $00, $00, $7e, $18, $18, $18, $7e ; I
+    !byte $00, $00, $00, $06, $06, $06, $66, $18 ; J
+    !byte $00, $00, $00, $66, $66, $78, $66, $66 ; K
+    !byte $00, $00, $00, $60, $60, $60, $60, $7e ; L
+    !byte $00, $00, $00, $66, $7e, $7e, $66, $66 ; M
+    !byte $00, $00, $00, $66, $7e, $7e, $7e, $66 ; N
+    !byte $00, $00, $00, $18, $66, $66, $66, $18 ; O
+    !byte $00, $00, $00, $78, $66, $78, $60, $60 ; P
+    !byte $00, $00, $00, $18, $66, $66, $7e, $1e ; Q
+    !byte $00, $00, $00, $78, $66, $78, $66, $66 ; R
+    !byte $00, $00, $00, $1e, $60, $18, $06, $78 ; S
+    !byte $00, $00, $00, $7e, $18, $18, $18, $18 ; T
+    !byte $00, $00, $00, $66, $66, $66, $66, $7e ; U
+    !byte $00, $00, $00, $66, $66, $66, $66, $18 ; V
+    !byte $00, $00, $00, $66, $66, $7e, $7e, $66 ; W
+    !byte $00, $00, $00, $66, $66, $18, $66, $66 ; X
+    !byte $00, $00, $00, $66, $66, $18, $18, $18 ; Y
+    !byte $00, $00, $00, $7e, $06, $18, $60, $7e ; Z
 !fill CHARSET_SIZE - (* - CHARSET_RAM), 0

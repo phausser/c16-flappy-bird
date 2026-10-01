@@ -14,16 +14,17 @@ RASTER_BORDER = $fc
 ; TED raster-counter coordinates: active 25-row screen is $04..$CB.
 ; Match the first visible character row.
 BACKGROUND_GRADIENT_FIRST_RASTER = $04
-; Low nibble is TED color 13 (blue); bits 4-6 set luminance 0..7.
-BG_GRADIENT_HUE = $0d
-BG_GRADIENT_START_COLOR = BG_GRADIENT_HUE
+; Low nibble selects the TED hue; bits 4-6 set luminance 0..7.
+BACKGROUND_GRADIENT_COLOR = 6
+BACKGROUND_GRADIENT_DISTANCE = 28
+BG_GRADIENT_START_COLOR = (0 << 4) + BACKGROUND_GRADIENT_COLOR
 BACKGROUND_GRADIENT_LEVELS = 7
 ; VICE normal PAL canvas starts at TED raster $113; active text starts at $04.
 BACKGROUND_GRADIENT_TOP_RASTER = $113
 ; First raster of character row 24. Floor color and scroll 0 start here,
 ; eight pixels above the lower border that used to begin at $CC.
 BACKGROUND_GRADIENT_BOTTOM_RASTER = $c4
-FRAME_BOTTOM_COLOR = $59
+FRAME_BOTTOM_COLOR = (6 << 4) + 9
 PIPE_RANDOM_SEED = $5d
 PIPE_RING_MASK = $3f
 PIPE_FIRST_COLUMN = 24
@@ -54,6 +55,7 @@ GLYPH_BIRD_LAST = GLYPH_BIRD_LEFT_ROW0 + BIRD_CELLS - 1
 ; Ten fixed hires digits, immediately after the dynamic bird glyphs.
 GLYPH_DIGIT_0 = GLYPH_BIRD_LAST + 1
 GLYPH_PIPE_CAP_LEFT = GLYPH_DIGIT_0 + 10
+GLYPH_LETTER_A = GLYPH_PIPE_CAP_LEFT + 3
 
 BIRD_SCREEN_COLUMN = 12
 BIRD_SCREEN_ROW = 10
