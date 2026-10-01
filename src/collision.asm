@@ -79,7 +79,7 @@ try_horizontal_scroll:
     lda #0
     sta SCROLL_PENDING
 bird_contact:
-    lda #1
+    lda #GAME_STATE_DEAD
     sta GAME_OVER
     lda #0
     sta BIRD_Y_FRACTION

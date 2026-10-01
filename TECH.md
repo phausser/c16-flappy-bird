@@ -44,6 +44,10 @@ early and writes after the line-3 character fetch. Changes to band spacing requi
 windows in VICE. This timing targets PAL with vertical scroll 3.
 
 Each pipe passed scores one point. The pipe that ends the run does not.
+Startup waits in PRESS SPACE mode with a stationary, live-colored bird.
+The first new Space press starts the round; physics and scrolling remain
+stopped until then. Waiting and death both blink the centered prompt, but
+only death uses the dead-bird color.
 Release and press Space again to restart from 0. A separate title screen
 is still open; see [TODO.md](TODO.md). Score changes set `HUD_DIRTY` during
 the buffer flip; only the numeric side fields are refreshed after scroll

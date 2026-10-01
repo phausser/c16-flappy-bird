@@ -3,7 +3,8 @@
 select_bird_color:
     lda #TED_BIRD_COLOR
     ldx GAME_OVER
-    beq bird_color_ready
+    cpx #GAME_STATE_DEAD
+    bne bird_color_ready
     lda #TED_BIRD_DEAD_COLOR
 bird_color_ready:
     sta CELL_COLOR

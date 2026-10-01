@@ -4,6 +4,8 @@ SCREEN_SIZE = SCREEN_COLUMNS * SCREEN_ROWS
 ; Rows 0-23 scroll. Row 24 holds the fixed HIGH/title/SCORE HUD.
 PLAYFIELD_ROWS = 24
 SCORE_ROW = 24
+GAME_STATE_DEAD = 1
+GAME_STATE_WAITING = 2
 
 INITIAL_SCROLL_OFFSET = 7
 ; Number of frames per column shift, and the pieces the hidden buffer is

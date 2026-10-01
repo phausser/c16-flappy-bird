@@ -164,6 +164,11 @@ def run_to_loop():
 
 
 run_to_loop()
+assert get('GAME_OVER') == S['GAME_STATE_WAITING']
+put('FLAP_PRESSED', 1)
+cpu.step()
+run_to_loop()
+assert get('GAME_OVER') == 0
 world = 0
 for frame in range(3000):
     next_gap = next(columns[world + col] for col in range(12, 40) if columns[world + col])

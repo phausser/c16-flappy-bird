@@ -3,6 +3,7 @@
 ![C16 Flappy Bird](preview.png)
 
 Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
+The game starts with blinking PRESS SPACE and waits for a new Space press.
 Space flaps. Each pipe you clear scores one point. Release Space and press
 it again to restart. The fixed bottom row shows HIGH with the session best on the left, TEDDY BIRD
 in the center and SCORE with the current score on the right. Numbers use

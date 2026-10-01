@@ -16,6 +16,8 @@ commands = [f'trace exec {symbols["main_loop"]:04x}',
             f'command 1 "> {symbols["BIRD_Y_FRACTION"]:04x} 00 08 00 00"']
 commands += [f'trace exec {symbols[name]:04x}'
              for name in ('clear_bird', 'render_bird', 'refresh_footer')]
+commands += [f'trace exec {symbols["main_loop"]:04x}',
+             f'command 5 "> {symbols["GAME_OVER"]:04x} 00"']
 commands.append('x')
 (ROOT / 'build/bird-timing.mon').write_text('\n'.join(commands) + '\n')
 

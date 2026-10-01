@@ -22,10 +22,14 @@ start:
     lda #0
     sta HIGH_SCORE
     sta HIGH_SCORE + 1
+    lda #GAME_STATE_WAITING
+    bne initialise_round
 restart_round:
     sei
     lda #0
+initialise_round:
     sta GAME_OVER
+    lda #0
     sta SCORE
     sta SCORE + 1
     sta HUD_BLINK

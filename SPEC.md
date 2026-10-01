@@ -232,7 +232,8 @@ erst dort werden Bildschirm, Zeichensatz und Scrollregister aktualisiert.
 reset/init
   -> video + eigener Zeichensatz + Eingabe initialisieren
   -> Spielfeld in beide Textpuffer spiegeln
-  -> neuer Lauf
+  -> beim Programmstart PRESS SPACE: Vogel und Welt stehen
+  -> neuer Lauf bei SPACE-Flanke
   -> frame loop
        input
        physics (Kandidatenposition)

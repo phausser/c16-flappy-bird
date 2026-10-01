@@ -86,7 +86,7 @@ vollstaendig dargestellt.
   Neustart durch erneuten Tastendruck.
 - [x] Punkte beim einmaligen Passieren eines Rohrs vergeben; HUD ohne
   Full-Screen-Redraw aktualisieren.
-- [ ] Start-, Spiel-, Kollisions- und Game-over-Zustaende implementieren,
+- [x] Start-, Spiel-, Kollisions- und Game-over-Zustaende implementieren,
   inklusive explizitem Neustart per Eingabe.
 
 **Abnahme:** Treffende und nicht treffende Randfaelle an Rohrkante und den

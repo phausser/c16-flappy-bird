@@ -169,7 +169,22 @@ else:
     raise AssertionError('restart did not reach the main loop')
 assert score_value() == 0
 expect_score(0)
-print('restart paints 0 in both buffers', flush=True)
+assert get('GAME_OVER') == SYMBOLS['GAME_STATE_WAITING']
+assert row(0x0c00)[14:25] != bytes(11)
+waiting_y, waiting_world, waiting_scroll = get('BIRD_Y_POSITION'), get('WORLD_COLUMN'), get('SCROLL_OFFSET')
+put('FLAP_PRESSED', 0)
+cpu.step()
+for _ in range(200000):
+    if cpu.pc == SYMBOLS['main_loop']:
+        break
+    cpu.step()
+else:
+    raise AssertionError('waiting frame did not finish')
+assert (get('BIRD_Y_POSITION'), get('WORLD_COLUMN'), get('SCROLL_OFFSET')) == (waiting_y, waiting_world, waiting_scroll)
+bird_cells = [col for col in range(24 * 40)
+              if SYMBOLS['GLYPH_BIRD_LEFT_ROW0'] <= cpu.memory[0x0c00 + col] <= SYMBOLS['GLYPH_BIRD_LAST']]
+assert bird_cells and all(cpu.memory[0x0800 + col] == SYMBOLS['TED_BIRD_COLOR'] for col in bird_cells)
+print('startup waits for Space with a live bird and a frozen world', flush=True)
 
 # Best score survives a round restart; the title returns immediately.
 put('HIGH_SCORE', 65)
