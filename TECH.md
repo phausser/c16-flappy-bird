@@ -28,8 +28,9 @@ color is set by `TED_BIRD_COLOR` in `src/hardware.inc`. The sky hue is set by
 `BACKGROUND_GRADIENT_COLOR` (currently TED color 6), with luminance 1–7.
 The upper border uses luminance 0. Band spacing is set by
 `BACKGROUND_GRADIENT_DISTANCE` (currently 28 lines). Color 9 at luminance 6
-covers the floor row plus the lower
-border, starting at TED line `$C4`. That same IRQ sets horizontal scroll to 0
+covers the lower border after the HUD. The HUD background starts at TED
+line `$C4` in color 5 at luminance 1 (`$15`) for exactly 11 raster lines;
+the existing brown begins at `$CF`. The HUD-entry IRQ sets horizontal scroll to 0
 for the score row only; the game loop restores the playfield scroll at line
 `$FC`. The active screen occupies TED raster-counter lines `$04` through
 `$CB`. The handler owns the hardware IRQ with ROM banked out and returns

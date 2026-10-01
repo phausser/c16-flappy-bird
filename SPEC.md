@@ -252,7 +252,8 @@ Sieben Rasterbaender teilen den aktiven Bildschirm mit konfigurierbarer Grundfar
 Luminanzen 1 bis 7. Hintergrund und Seitenrahmen wechseln bei jedem Schritt
 auf derselben Rasterzeile. Der obere Rahmen bleibt bis zum Bildschirmbeginn
 auf Luminanz 0; am Beginn des unteren Rahmens wechseln Hintergrund und Rahmen
-auf TED-Farbe 9 mit Luminanz 6. Spielberechnung und Bildschirmaufbau bleiben
+zunaechst auf TED-Farbe 5 mit Luminanz 1 fuer elf Pixelzeilen; danach
+folgt der vorhandene Braunton (TED-Farbe 9 mit Luminanz 6). Spielberechnung und Bildschirmaufbau bleiben
 ausserhalb des IRQ.
 
 ### Raster-IRQ und buendige Oberkante
@@ -266,11 +267,13 @@ IRQ vorbereitet. `$FF0A` aktiviert nur den Raster-IRQ samt Vergleichsbit 8.
 
 Die Rastervergleichswerte stehen in `background_gradient_rasters`: erste
 Zeile minus zwei, sechs Vielfache von `BACKGROUND_GRADIENT_DISTANCE`
-(aktuell 28), Boden minus zwei und oberer Rand minus eins. Die Farben kommen
+(aktuell 28), HUD-Beginn minus zwei, Braunbeginn nach elf Zeilen minus eins
+und oberer Rand minus eins. Die Farben kommen
 aus `background_gradient_colors`, auch fuer Oberkante und Boden. Die erste Grenze entspricht
 PAL-Bildzeile `$34` und der ersten Rohrzeile. Der obere Rahmen behaelt bis
 dorthin Luminanz 0. Ab `$C4`, der ersten Rasterzeile von Zeichenzeile 24,
-tragen Hintergrund und Rahmen die Bodenfarbe. Dieselbe IRQ setzt `$FF07`
+tragen Hintergrund und Rahmen fuer elf Rasterzeilen die dunkelgruene
+HUD-Farbe; ab `$CF` wieder die braune Bodenfarbe. Dieselbe IRQ setzt `$FF07`
 auf Scroll 0, nur fuer diese Zeile. Die Spielschleife schreibt den
 Spiel-Scroll im unteren Rand (`$FC`) zurueck, auch wenn der Lauf steht.
 

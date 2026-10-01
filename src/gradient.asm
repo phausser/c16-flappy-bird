@@ -75,7 +75,7 @@ gradient_top_background_store:
 gradient_schedule_next:
     ldx BACKGROUND_GRADIENT_INDEX
     inx
-    cpx #BACKGROUND_GRADIENT_LEVELS + 2
+    cpx #BACKGROUND_GRADIENT_LEVELS + 3
     bcc gradient_next_ready
     ldx #0
 gradient_next_ready:
@@ -138,7 +138,8 @@ gradient_floor_scroll_store:
     sta TED_CONTROL2
     jmp gradient_schedule_next
 
-; Seven active bands, then lower and upper border. Each event supplies the
+; Seven active bands, then the 11-line HUD strip, brown and upper border.
+; Each event supplies the
 ; entire 9-bit compare and enables only raster IRQs (bit 1).
 ; Band edges are shifted at most two lines to avoid the fetch pairs.
 ; Horizontal timing assumes PAL, vertical scroll 3 and normal TED speed.
@@ -150,7 +151,7 @@ background_gradient_colors:
     !byte (5 << 4) + BACKGROUND_GRADIENT_COLOR
     !byte (6 << 4) + BACKGROUND_GRADIENT_COLOR
     !byte (7 << 4) + BACKGROUND_GRADIENT_COLOR
-    !byte FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
+    !byte HUD_BACKGROUND_COLOR, FRAME_BOTTOM_COLOR, BG_GRADIENT_START_COLOR
 background_gradient_rasters:
     !byte BACKGROUND_GRADIENT_FIRST_RASTER - 2
     !byte 1 * BACKGROUND_GRADIENT_DISTANCE
@@ -159,8 +160,11 @@ background_gradient_rasters:
     !byte 4 * BACKGROUND_GRADIENT_DISTANCE
     !byte 5 * BACKGROUND_GRADIENT_DISTANCE
     !byte 6 * BACKGROUND_GRADIENT_DISTANCE
-    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 2), <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
+    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER - 2)
+    !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER + HUD_BACKGROUND_HEIGHT - 1)
+    !byte <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
 background_gradient_high:
     !fill BACKGROUND_GRADIENT_LEVELS, 2
     !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 2) >> 8)
+    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER + HUD_BACKGROUND_HEIGHT - 1) >> 8)
     !byte 2 | ((BACKGROUND_GRADIENT_TOP_RASTER - 1) >> 8)

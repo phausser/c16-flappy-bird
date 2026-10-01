@@ -15,11 +15,14 @@ S = {n: int(v, 16) for n, v in re.findall(r'^\s*(\w+)\s*=\s*\$([0-9a-f]+)',
                                         (ROOT / 'build/flappy.sym').read_text(), re.M)}
 COLORS = [(level << 4) + S['BACKGROUND_GRADIENT_COLOR']
           for level in range(1, S['BACKGROUND_GRADIENT_LEVELS'] + 1)]
-COLORS += [S['FRAME_BOTTOM_COLOR'], S['BG_GRADIENT_START_COLOR']]
+COLORS += [S['HUD_BACKGROUND_COLOR'], S['FRAME_BOTTOM_COLOR'], S['BG_GRADIENT_START_COLOR']]
 LINES = [S['BACKGROUND_GRADIENT_FIRST_RASTER']]
 LINES += [level * S['BACKGROUND_GRADIENT_DISTANCE'] + 1
           for level in range(1, S['BACKGROUND_GRADIENT_LEVELS'])]
-LINES += [S['BACKGROUND_GRADIENT_BOTTOM_RASTER'], S['BACKGROUND_GRADIENT_TOP_RASTER']]
+LINES += [S['BACKGROUND_GRADIENT_BOTTOM_RASTER'],
+          S['BACKGROUND_GRADIENT_BOTTOM_RASTER'] + S['HUD_BACKGROUND_HEIGHT'],
+          S['BACKGROUND_GRADIENT_TOP_RASTER']]
+assert S['HUD_BACKGROUND_COLOR'] == 0x15 and S['HUD_BACKGROUND_HEIGHT'] == 11
 
 
 class Memory(list):
@@ -49,8 +52,8 @@ for restart in range(2):
     else:
         raise AssertionError('initialization did not return')
     assert cpu.WordAt(0xfffe) == S['background_gradient_top_irq']
-    for event in range(27):
-        index = event % 9
+    for event in range(3 * len(COLORS)):
+        index = event % len(COLORS)
         if index == 0:
             handler = "background_gradient_top_irq"
         elif index == 7:
@@ -98,5 +101,5 @@ if len(sys.argv) > 1:
         assert (-10 <= offset <= 5 if reg == 'ff19' else -10 <= offset <= 13), (
             reg, line, cycle, color)
         counts[reg, index] += 1
-    assert len(counts) == 18 and min(counts.values()) >= 100, counts
+    assert len(counts) == 2 * len(COLORS) and min(counts.values()) >= 100, counts
     print(f'{sum(counts.values())} VICE color writes passed blank-window checks')

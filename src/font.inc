@@ -531,8 +531,8 @@ digit_glyphs:
     !byte %01100110
     !byte %01100110
     !byte %01100110
-    !byte %0011011
-    !byte %00011110
+    !byte %00111100
+    !byte %00011000
 
 ; Letter W
     !byte %00000000

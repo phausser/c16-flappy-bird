@@ -24,6 +24,8 @@ BACKGROUND_GRADIENT_TOP_RASTER = $113
 ; First raster of character row 24. Floor color and scroll 0 start here,
 ; eight pixels above the lower border that used to begin at $CC.
 BACKGROUND_GRADIENT_BOTTOM_RASTER = $c4
+HUD_BACKGROUND_COLOR = (5 << 4) + 9
+HUD_BACKGROUND_HEIGHT = 11
 FRAME_BOTTOM_COLOR = (6 << 4) + 9
 PIPE_RANDOM_SEED = $5d
 PIPE_RING_MASK = $3f

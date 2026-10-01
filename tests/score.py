@@ -154,7 +154,7 @@ assert get('GAME_OVER') == 1
 bird_cells = [col for col in range(24 * 40)
               if SYMBOLS['GLYPH_BIRD_LEFT_ROW0'] <= cpu.memory[0x0c00 + col] <= SYMBOLS['GLYPH_BIRD_LAST']]
 assert bird_cells
-assert all(cpu.memory[0x0800 + col] == 0x62 for col in bird_cells)
+assert all(cpu.memory[0x0800 + col] == SYMBOLS['TED_BIRD_DEAD_COLOR'] for col in bird_cells)
 assert score_value() == 0
 assert get('SCROLL_OFFSET') == 0 and get('FLIP_READY') == 1
 print('contact on the scoring frame awards nothing', flush=True)
