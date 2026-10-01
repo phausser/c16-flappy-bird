@@ -46,24 +46,18 @@ def set_score(value):
 
 
 def score_cells(value):
-    digits = str(value)
-    start = 1 + (38 - len(digits)) // 2
     glyphs = [0] * 40
     inks = [0] * 40
-    for offset, char in enumerate(digits):
-        glyphs[start + offset] = SYMBOLS['GLYPH_DIGIT_0'] + int(char)
-        inks[start + offset] = SYMBOLS['TED_SCORE_COLOR']
-    title = 'PRESS SPACE' if cpu.memory[SYMBOLS['GAME_OVER']] else 'FLAPPY BIRD'
-    if not cpu.memory[SYMBOLS['GAME_OVER']] or not cpu.memory[SYMBOLS['HUD_BLINK']]:
-        for col, char in enumerate(title, 1):
-            glyphs[col] = 0 if char == ' ' else SYMBOLS['GLYPH_LETTER_A'] + ord(char) - ord('A')
-            inks[col] = SYMBOLS['TED_SCORE_COLOR']
     high = cpu.memory[SYMBOLS['HIGH_SCORE']] | (cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8)
-    label = 'HI ' + str(high)
-    for col, char in enumerate(label, 39 - len(label)):
-        glyphs[col] = (0 if char == ' ' else SYMBOLS['GLYPH_DIGIT_0'] + int(char)
-                       if char.isdigit() else SYMBOLS['GLYPH_LETTER_A'] + ord(char) - ord('A'))
-        inks[col] = 0 if char == ' ' else SYMBOLS['TED_SCORE_COLOR']
+    title = 'PRESS SPACE' if cpu.memory[SYMBOLS['GAME_OVER']] else 'TEDDY BIRD'
+    labels = [(1, f'HIGH {high:04d}'), (39 - len(f'SCORE {value:04d}'), f'SCORE {value:04d}')]
+    if not cpu.memory[SYMBOLS['GAME_OVER']] or not cpu.memory[SYMBOLS['HUD_BLINK']]:
+        labels.append((1 + (38 - len(title)) // 2, title))
+    for start, label in labels:
+        for col, char in enumerate(label, start):
+            glyphs[col] = (0 if char == ' ' else SYMBOLS['GLYPH_DIGIT_0'] + int(char)
+                           if char.isdigit() else SYMBOLS['GLYPH_LETTER_A'] + ord(char) - ord('A'))
+            inks[col] = SYMBOLS['TED_SCORE_COLOR'] if char != ' ' or label == title else 0
     return glyphs, inks
 
 
@@ -101,7 +95,7 @@ for value in (9, 10, 100, 999, 1000, 9999, 10000, 65535):
     set_score(value)
     call('render_score')
     expect_score(value)
-print('digits 0, 9, 10, 100 and the wider values sit on the centered columns', flush=True)
+print('zero-padded HIGH and SCORE stay aligned through the full 16-bit range', flush=True)
 
 set_score(0)
 call('render_score')
@@ -157,6 +151,10 @@ for _ in range(200000):
 else:
     raise AssertionError('contact frame did not finish')
 assert get('GAME_OVER') == 1
+bird_cells = [col for col in range(24 * 40)
+              if SYMBOLS['GLYPH_BIRD_LEFT_ROW0'] <= cpu.memory[0x0c00 + col] <= SYMBOLS['GLYPH_BIRD_LAST']]
+assert bird_cells
+assert all(cpu.memory[0x0800 + col] == 0x62 for col in bird_cells)
 assert score_value() == 0
 assert get('SCROLL_OFFSET') == 0 and get('FLIP_READY') == 1
 print('contact on the scoring frame awards nothing', flush=True)
@@ -187,8 +185,9 @@ for _ in range(24):
 assert row(0x0c00) == visible
 call('update_footer_blink')
 expect_score(0)
-assert row(0x0c00)[1:12] == bytes(11)
-assert row(0x0c00)[12:] == visible[12:]
+assert row(0x0c00)[14:25] == bytes(11)
+assert row(0x0c00)[:14] == visible[:14]
+assert row(0x0c00)[25:] == visible[25:]
 for _ in range(25):
     call('update_footer_blink')
 assert row(0x0c00) == visible
@@ -202,10 +201,35 @@ for _ in range(300000):
 else:
     raise AssertionError('round restart did not finish')
 assert get('GAME_OVER') == get('HUD_BLINK') == get('HUD_TIMER') == 0
+bird_cells = [col for col in range(24 * 40)
+              if SYMBOLS['GLYPH_BIRD_LEFT_ROW0'] <= cpu.memory[0x0c00 + col] <= SYMBOLS['GLYPH_BIRD_LAST']]
+assert bird_cells and all(cpu.memory[0x0800 + col] == SYMBOLS['TED_BIRD_COLOR'] for col in bird_cells)
 assert cpu.memory[SYMBOLS['HIGH_SCORE']] | cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8 == 321
 expect_score(0)
 set_score(322)
 call('render_score')
 assert cpu.memory[SYMBOLS['HIGH_SCORE']] | cpu.memory[SYMBOLS['HIGH_SCORE'] + 1] << 8 == 322
 expect_score(322)
-print('title, right-aligned best score, 25-frame blinking and round persistence passed')
+print('centered title, 25-frame blinking, round persistence and dead/live bird colors passed')
+
+# Scoring must preserve the title and playfield and fit a short update.
+put('GAME_OVER', 0)
+set_score(1233)
+call('render_score')
+before_screen = [bytes(cpu.memory[page:page + 24 * 40]) for page in (0x0c00, 0x1c00)]
+before_title = [row(page)[14:25] for page in (0x0c00, 0x1c00)]
+set_score(1234)
+put('HUD_DIRTY', 1)
+cycles = cpu.processorCycles
+call('refresh_footer')
+cycles = cpu.processorCycles - cycles
+assert cycles < 3000, cycles
+expect_score(1234)
+assert before_screen == [bytes(cpu.memory[page:page + 24 * 40]) for page in (0x0c00, 0x1c00)]
+assert before_title == [row(page)[14:25] for page in (0x0c00, 0x1c00)]
+for value in (9999, 10000, 65535):
+    set_score(value)
+    put('HUD_DIRTY', 1)
+    call('refresh_footer')
+    expect_score(value)
+print(f'incremental score refresh preserves playfield/title: {cycles} CPU cycles at 1234')

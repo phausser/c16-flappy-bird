@@ -242,7 +242,7 @@ reset/init
        $FF07 schreiben, beim Umbruch auch $FF14
        ein Teilstueck in den versteckten Puffer kopieren
        Vogel auf den sichtbaren Puffer zeichnen
-       vorgemerkte HUD-Aktualisierung ausfuehren
+       vorgemerkte Score-Felder direkt in beide Puffer schreiben; Titel unveraendert
   -> game-over
   -> neuer Lauf bei erneuter SPACE-Flanke
 ```
@@ -295,7 +295,8 @@ Quelldateien:
 | `src/constants.inc` | Physik-, Spiel- und Kollisionskonstanten |
 | `src/video.asm` | TED-Setup, Frame-Sync, Feinscroll, Screen-Spalten |
 | `src/gradient.asm` | Rasterfarben, Hardware-IRQ und horizontale Synchronisierung |
-| `src/bird_masks.inc` | importierte Vogelmasken; statische Glyphen stehen in `main.asm` |
+| `src/bird_masks.inc` | importierte Vogelmasken fuer die dynamische Animation |
+| `src/font.inc` | Zeichensatz: Ziffern, Buchstaben, Rohrglyphen; ein binaeres Byte pro Zeile |
 | `src/input.asm` | Flankenerkennung fuer SPACE |
 | `src/bird.asm` | Physik, Maskenkomposition und Vogelzeichnung |
 | `src/collision.asm` | Pixelkontakt, sichere Pose und Bewegung |
@@ -349,11 +350,14 @@ Animationskadenz und IRQ-Zustand sind geprueft. HUD-Tests pruefen Ausrichtung,
 Sitzungsbestwert, Blinken und das Verschieben der HUD-Ausgabe hinter den
 zeitkritischen Pufferwechsel.
 
-Die untere Zeile zeigt links FLAPPY BIRD, mittig den aktuellen Score und
-rechts HI mit dem Bestwert. Bei Game-over blinkt links PRESS SPACE mit
+Die untere Zeile zeigt links HIGH mit Bestwert, mittig TEDDY BIRD und
+rechts SCORE mit aktuellem Punktestand. Zahlen haben mindestens vier Stellen
+mit fuehrenden Nullen; oberhalb 9999 bleiben alle fuenf Stellen sichtbar.
+Bei Game-over blinkt mittig PRESS SPACE mit
 25 PAL-Frames pro Phase. Der Bestwert bleibt bei Rundenneustart bestehen
 und wird beim Programmstart geloescht. Buchstaben verwenden die gleiche
-Fuenf-Pixel-Hoehe und Zwei-Pixel-Strichstaerke wie die Ziffern.
+Fuenf-Pixel-Hoehe und Zwei-Pixel-Strichstaerke wie die Ziffern. Der tote Vogel
+verwendet TED-Farbe 2 mit Luminanz 6; Neustart stellt TED_BIRD_COLOR wieder her.
 
 Eine fruehere Multicolor-Fassung bestand 3.874 Farbzugriffe in VICE. Ein
 neuer Rastertrace und Fuenf-Minuten-Dauerlauf des aktuellen Stands sowie

@@ -75,24 +75,18 @@ def score_value():
 
 
 def score_cells(value):
-    digits = str(value)
-    start = 1 + (38 - len(digits)) // 2
     glyphs = [0] * 40
     inks = [0] * 40
-    for offset, char in enumerate(digits):
-        glyphs[start + offset] = S['GLYPH_DIGIT_0'] + int(char)
-        inks[start + offset] = S['TED_SCORE_COLOR']
-    title = 'PRESS SPACE' if cpu.memory[S['GAME_OVER']] else 'FLAPPY BIRD'
-    if not cpu.memory[S['GAME_OVER']] or not cpu.memory[S['HUD_BLINK']]:
-        for col, char in enumerate(title, 1):
-            glyphs[col] = 0 if char == ' ' else S['GLYPH_LETTER_A'] + ord(char) - ord('A')
-            inks[col] = S['TED_SCORE_COLOR']
     high = cpu.memory[S['HIGH_SCORE']] | (cpu.memory[S['HIGH_SCORE'] + 1] << 8)
-    label = 'HI ' + str(high)
-    for col, char in enumerate(label, 39 - len(label)):
-        glyphs[col] = (0 if char == ' ' else S['GLYPH_DIGIT_0'] + int(char)
-                       if char.isdigit() else S['GLYPH_LETTER_A'] + ord(char) - ord('A'))
-        inks[col] = 0 if char == ' ' else S['TED_SCORE_COLOR']
+    title = 'PRESS SPACE' if cpu.memory[S['GAME_OVER']] else 'TEDDY BIRD'
+    labels = [(1, f'HIGH {high:04d}'), (39 - len(f'SCORE {value:04d}'), f'SCORE {value:04d}')]
+    if not cpu.memory[S['GAME_OVER']] or not cpu.memory[S['HUD_BLINK']]:
+        labels.append((1 + (38 - len(title)) // 2, title))
+    for start, label in labels:
+        for col, char in enumerate(label, start):
+            glyphs[col] = (0 if char == ' ' else S['GLYPH_DIGIT_0'] + int(char)
+                           if char.isdigit() else S['GLYPH_LETTER_A'] + ord(char) - ord('A'))
+            inks[col] = S['TED_SCORE_COLOR'] if char != ' ' or label == title else 0
     return glyphs, inks
 
 

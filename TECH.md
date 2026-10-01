@@ -5,12 +5,17 @@ The playfield uses mixed multicolor/hires TED text mode: 38 visible columns, a
 hidden text buffer and `$FF14` flips to it in the bottom border. Collision
 uses the visible bird pixels and stops at the last free pixel against solid
 pipes, the top edge (pixel 0) and the floor row (pixel 192). Pipes use rows
-0-23. Row 24 is a fixed floor in the lower-border color and shows the score,
-centered, without scrolling. “FLAPPY BIRD” sits on the left and “HI” plus
-the session's best score on the right. On game over, “PRESS SPACE” replaces
-the title and alternates visible/hidden every 25 PAL frames. The best score
+0-23. Row 24 is a fixed floor in the lower-border color and shows “HIGH 0000”
+on the left, “TEDDY BIRD” centered and “SCORE 0000” on the right, without
+scrolling. Numbers have four places with leading zeros (five above 9999).
+On game over, “PRESS SPACE” replaces the centered title and alternates visible/hidden every 25 PAL frames. The best score
 survives round restarts and resets when the program starts. The lettering
-uses the digits' five-pixel height and two-pixel strokes.
+uses the digits' five-pixel height and two-pixel strokes. On death the bird
+uses TED color 2 at luminance 6 (`$62`); restarting restores `TED_BIRD_COLOR`.
+The RAM character set lives in `src/font.inc`: letters, digits and pipe
+glyphs use one binary byte per line. Eight consecutive lines form a glyph;
+bit 7 is the leftmost pixel. Dynamic bird glyphs are reserved there and
+filled at runtime from the animation masks in `src/bird_masks.inc`.
 Empty bird cells leave the environment and its
 colors untouched.
 
@@ -38,8 +43,11 @@ windows in VICE. This timing targets PAL with vertical scroll 3.
 Each pipe passed scores one point. The pipe that ends the run does not.
 Release and press Space again to restart from 0. A separate title screen
 is still open; see [TODO.md](TODO.md). Score changes set `HUD_DIRTY` during
-the buffer flip; the footer is refreshed after scroll copying and bird
-rendering. This keeps the approximately 1.92-second scoring events from
+the buffer flip; only the numeric side fields are refreshed after scroll
+copying and bird rendering. Fixed HUD cells are written directly into both
+buffers, avoiding per-character row-pointer calculations. At score 1234,
+the incremental update uses 2,628 CPU cycles versus 9,242 for the previous
+full redraw. The centered title stays untouched by scoring. This keeps the approximately 1.92-second scoring events from
 delaying the time-critical top-row updates. The scroll timing is specified
 in [SPEC.md](SPEC.md).
 

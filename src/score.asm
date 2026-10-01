@@ -32,14 +32,17 @@ refresh_footer:
     beq footer_refresh_done
     lda #0
     sta HUD_DIRTY
-    jmp render_score
+    jmp render_footer_scores
 footer_refresh_done:
     rts
 
-; Paint the decimal score into row 24 of both text buffers. Leading zeros
-; are omitted and the digits are recentered in the 38 visible columns.
+; Paint HIGH on the left, the title in the center and SCORE on the right.
+; Numbers have at least four digits; five retain the full 16-bit range.
 ; Empty cells stay glyph 0, so the floor raster shows through them.
 render_score:
+    jsr clear_score_rows
+    jsr render_footer_text
+render_footer_scores:
     lda SCORE + 1
     cmp HIGH_SCORE + 1
     bcc high_score_ready
@@ -53,8 +56,6 @@ high_score_update:
     lda SCORE + 1
     sta HIGH_SCORE + 1
 high_score_ready:
-    jsr clear_score_rows
-    jsr render_footer_text
     lda #0
     sta HUD_NUMBER
     lda SCORE
@@ -62,28 +63,7 @@ high_score_ready:
     lda SCORE + 1
     sta SCORE_WORK + 1
 render_footer_number:
-    ldx #1
-    lda SCORE_WORK + 1
-    bne score_places_large
-    lda SCORE_WORK
-    cmp #10
-    bcc score_places_known
-    inx
-    cmp #100
-    bcc score_places_known
-    inx
-    jmp score_places_known
-score_places_large:
-    ldx #3
-    lda SCORE_WORK + 1
-    cmp #3
-    bcc score_places_known
-    bne score_places_four
-    lda SCORE_WORK
-    cmp #$e8
-    bcc score_places_known
-score_places_four:
-    inx
+    ldx #4
     lda SCORE_WORK + 1
     cmp #$27
     bcc score_places_known
@@ -95,31 +75,47 @@ score_places_five:
     inx
 score_places_known:
     stx SCORE_PLACES
-    ; start = 1 + (38 - places) / 2. The spare column sits on the right.
-    lda #SCREEN_COLUMNS - 2
-    sec
-    sbc SCORE_PLACES
-    lsr
-    clc
-    adc #1
+    lda #1
     sta COLUMN_X
     lda HUD_NUMBER
-    beq footer_number_positioned
-    lda #SCREEN_COLUMNS - 1
+    bne footer_label_start
+    lda #SCREEN_COLUMNS - 7
     sec
     sbc SCORE_PLACES
     sta COLUMN_X
-    sec
-    sbc #3
-    sta COLUMN_X
-    lda #GLYPH_LETTER_A + 7
+footer_label_start:
+    lda #0
+    sta HUD_TEXT_INDEX
+footer_label_next:
+    ldx HUD_TEXT_INDEX
+    lda HUD_NUMBER
+    bne footer_high_label
+    lda footer_score,x
+    jmp footer_label_plot
+footer_high_label:
+    lda footer_high,x
+footer_label_plot:
     sta CELL_GLYPH
     jsr plot_score_glyph
     inc COLUMN_X
-    lda #GLYPH_LETTER_A + 8
-    sta CELL_GLYPH
-    jsr plot_score_glyph
-    inc COLUMN_X
+    inc HUD_TEXT_INDEX
+    lda HUD_NUMBER
+    beq footer_score_length
+    lda #4
+    bne footer_label_length
+footer_score_length:
+    lda #5
+footer_label_length:
+    cmp HUD_TEXT_INDEX
+    bne footer_label_next
+    ; The right label moves left when the counter gains a fifth digit.
+    ; Clear its separator so the previous label's last letter cannot remain.
+    ldy COLUMN_X
+    lda #0
+    sta SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
     inc COLUMN_X
 footer_number_positioned:
     lda #5
@@ -181,7 +177,9 @@ footer_blink_done:
     rts
 
 render_footer_text:
-    lda #1
+    lda #15
+    sec
+    sbc GAME_OVER
     sta COLUMN_X
     lda #0
     sta HUD_TEXT_INDEX
@@ -201,13 +199,23 @@ footer_text_plot:
     inc COLUMN_X
     inc HUD_TEXT_INDEX
     lda HUD_TEXT_INDEX
+    ldx GAME_OVER
+    bne footer_prompt_length
+    cmp #10
+    bcc footer_text_next
+    rts
+footer_prompt_length:
     cmp #11
     bcc footer_text_next
 footer_text_done:
     rts
 
 footer_name:
-    !byte GLYPH_LETTER_A+5, GLYPH_LETTER_A+11, GLYPH_LETTER_A, GLYPH_LETTER_A+15, GLYPH_LETTER_A+15, GLYPH_LETTER_A+24, 0, GLYPH_LETTER_A+1, GLYPH_LETTER_A+8, GLYPH_LETTER_A+17, GLYPH_LETTER_A+3
+    !byte GLYPH_LETTER_A+19, GLYPH_LETTER_A+4, GLYPH_LETTER_A+3, GLYPH_LETTER_A+3, GLYPH_LETTER_A+24, 0, GLYPH_LETTER_A+1, GLYPH_LETTER_A+8, GLYPH_LETTER_A+17, GLYPH_LETTER_A+3
+footer_high:
+    !byte GLYPH_LETTER_A+7, GLYPH_LETTER_A+8, GLYPH_LETTER_A+6, GLYPH_LETTER_A+7
+footer_score:
+    !byte GLYPH_LETTER_A+18, GLYPH_LETTER_A+2, GLYPH_LETTER_A+14, GLYPH_LETTER_A+17, GLYPH_LETTER_A+4
 footer_prompt:
     !byte GLYPH_LETTER_A+15, GLYPH_LETTER_A+17, GLYPH_LETTER_A+4, GLYPH_LETTER_A+18, GLYPH_LETTER_A+18, 0, GLYPH_LETTER_A+18, GLYPH_LETTER_A+15, GLYPH_LETTER_A, GLYPH_LETTER_A+2, GLYPH_LETTER_A+4
 
@@ -231,23 +239,16 @@ clear_score_cell:
     bpl clear_score_cell
     rts
 
-; A is the screen page and Y the color page. COLUMN_X and CELL_GLYPH
-; select the digit. Both buffers are written so a $FF14 flip cannot blink.
+; The HUD row never moves. Address both buffers directly instead of
+; recalculating two row pointers for every individual glyph.
 plot_score_glyph:
-    lda #>SCREEN_RAM
-    ldy #>COLOR_RAM
-    jsr plot_score_buffer
-    lda #>BACK_SCREEN_RAM
-    ldy #>BACK_COLOR_RAM
-plot_score_buffer:
-    tax
-    lda #SCORE_ROW
-    jsr point_row
     ldy COLUMN_X
     lda CELL_GLYPH
-    sta (SCREEN_DESTINATION),y
+    sta SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
     lda #TED_SCORE_COLOR
-    sta (SCREEN_SOURCE),y
+    sta COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
     rts
 
 ; 10000, 1000, 100, 10, 1. Five places cover the whole 16-bit counter.

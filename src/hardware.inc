@@ -54,6 +54,7 @@ TED_PIPE_COLOR = (4 << 4) + 5 | $08
 ; passing in front of a pipe.
 ; TED color 3 at luminance 5 (bits 6-4 = 5, bits 3-0 = 3).
 TED_BIRD_COLOR = (7 << 4) + 7
+TED_BIRD_DEAD_COLOR = (7 << 4) + 4
 ; Score digits are hires white (luminance 7, color 1). Color-RAM bit 3
 ; stays clear, so the digits do not use the pipe multicolor palette.
 TED_SCORE_COLOR = (7 << 4) + 1

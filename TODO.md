@@ -125,10 +125,14 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
   Kontakt-, Freeze- und Neustarttests bestehen.
 - [ ] Neuen VICE-Rastertrace fuer aktuelle Farben, Abstaende und HUD-Timing aufzeichnen.
 - [ ] Neue Rasterroutine auf echter PAL-C16-Hardware pruefen.
-- [x] HUD: FLAPPY BIRD links, Score mittig, HI mit Sitzungsbestwert rechts.
-- [x] PRESS SPACE blinkt bei Game-over; Bestwert ueberlebt Rundenneustart.
+- [x] HUD: HIGH mit Sitzungsbestwert links, TEDDY BIRD mittig, SCORE rechts;
+  vierstellige Zahlen mit fuehrenden Nullen (fuenf Stellen oberhalb 9999).
+- [x] PRESS SPACE blinkt mittig bei Game-over; Bestwert ueberlebt Rundenneustart.
+- [x] Toten Vogel auf TED-Farbe 2, Luminanz 6 setzen; normale Farbe beim Neustart.
 - [x] HUD-Ausgabe nach Scroll-/Vogel-Ausgabe verschieben, damit Punkteereignisse
   den zeitkritischen Pufferwechsel nicht verzoegern.
+- [x] Bei Punkten nur die seitlichen Score-Felder mit direkten Pufferadressen
+  aktualisieren; kein Loeschen/Neuzeichnen des mittleren Textes.
 
 ## Technische Risiken und Entscheidungen
 
