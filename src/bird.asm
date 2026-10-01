@@ -34,7 +34,7 @@ apply_gravity:
     lda BIRD_VELOCITY
     adc #0
     ; BIRD_VELOCITY is signed. An unsigned compare treats the upward
-    ; impulse ($FE) as greater than the fall cap and cancels the flap
+    ; impulse as greater than the fall cap and cancels the flap
     ; on the very next frame.
     bmi store_velocity
     cmp #BIRD_MAX_FALL_SPEED
@@ -232,6 +232,7 @@ clear_next_row:
 ; Publish only the accepted scratch image. Occupancy uses column-major
 ; glyph order, while the saved screen cells are in row-major order.
 render_bird:
+    jsr select_bird_color
     ldx #BIRD_GLYPH_BYTES - 1
 publish_bird_glyphs:
     lda BIRD_CANDIDATE,x
@@ -263,11 +264,7 @@ render_bird_cell:
     clc
     adc #GLYPH_BIRD_LEFT_ROW0
     sta (SCREEN_DESTINATION),y
-    lda #TED_BIRD_COLOR
-    ldx GAME_OVER
-    beq bird_color_ready
-    lda #TED_BIRD_DEAD_COLOR
-bird_color_ready:
+    lda CELL_COLOR
     sta (SCREEN_SOURCE),y
 render_cell_done:
     inc CELL_INDEX

@@ -1,4 +1,4 @@
-; TED (MOS 7360/8360) registers used by the initial PAL C16 build.
+; TED (MOS 7360/8360) registers used by the PAL C16 build.
 
 TED_CONTROL1 = $ff06
 TED_CONTROL2 = $ff07
@@ -21,40 +21,3 @@ TED_RASTER_LO = $ff1d
 TED_RASTER_HORIZONTAL = $ff1e
 TED_RAM_ENABLE = $ff3f
 HARDWARE_IRQ_VECTOR = $fffe
-
-; Bits 0-2 = vertical scroll 3. Scroll 0 shifts the matrix up and opens
-; three scanlines below the playfield; the TED paints the bytes past the
-; screen matrix there (a light bar, and on some offsets a black block).
-; Bit 3 = 25 rows. Bit 4 = display on.
-TED_CONTROL1_TEXT_25_ROWS = $1b
-; Bit 3 clear = 38 columns. The border then covers eight pixels on each
-; side, which is where a horizontal scroll would otherwise show the partial
-; column. The screen matrix stays 40 bytes wide; columns 0 and 39 are the
-; hidden guards. Bit 7 stays clear: set, it switches the TED into
-; 256-character mode and the chargen base then moves in 2 KiB steps, so
-; $3400 cannot be addressed and $0D aliases onto colour RAM at $0800.
-; Bit 4 enables mixed multicolor text. Color-RAM bit 3 selects each cell.
-TED_CONTROL2_TEXT_38_COLS = $10
-
-TED_BLACK = $00
-TED_GREEN = $57
-TED_BLUE = $6d
-TED_LIGHT_BLUE = $e7
-TED_YELLOW = $77
-
-TED_SKY_COLOR = TED_BLUE
-; Pipe pairs: 01 = yellow highlight, 10 = dark green, 11 = green.
-; Attribute bit 3 enables multicolor; the bird keeps it clear for hires.
-TED_PIPE_HIGHLIGHT = (6 << 4) + 5
-TED_PIPE_SHADOW = (3 << 4) + 5
-TED_PIPE_COLOR = (4 << 4) + 5 | $08
-
-; Black gives the bird the strongest contrast against sky and pipes
-; alike, so it stays visible airborne, at the lower screen edge, or
-; passing in front of a pipe.
-; TED color 3 at luminance 5 (bits 6-4 = 5, bits 3-0 = 3).
-TED_BIRD_COLOR = (7 << 4) + 7
-TED_BIRD_DEAD_COLOR = (7 << 4) + 4
-; Score digits are hires white (luminance 7, color 1). Color-RAM bit 3
-; stays clear, so the digits do not use the pipe multicolor palette.
-TED_SCORE_COLOR = (7 << 4) + 1

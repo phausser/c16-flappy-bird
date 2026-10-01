@@ -112,7 +112,7 @@ wait_after_line:
 ; written into the hidden buffer after the register stores, so a long copy
 ; cannot move $FF07/$FF14 down into the next picture. The new column is
 ; finished on the frame before the wrap; the wrap itself only stores the
-; two registers, while the beam is still in the border.
+; two registers and marks score changes for a later HUD update.
 advance_scroll:
     dec SCROLL_OFFSET
     bpl scroll_write
@@ -276,7 +276,7 @@ point_row:
     rts
 
 slice_rows:
-; Row 24 is the score. Leave it out of the shift or the digits walk left.
+; Row 24 is the fixed HUD. Leave it out of the shift.
 !set copy_row = 0
 !do while copy_row < PLAYFIELD_ROWS {
     !byte copy_row

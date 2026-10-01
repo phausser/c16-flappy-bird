@@ -75,8 +75,9 @@ Dunkelgruen, Gruen, Dunkelgruen, Dunkelgruen. Oben und unten bleiben die
 Rohrkoerper gerade; drei separate Kappenglyphen folgen den Ziffernglyphen.
 
 `$FF07` Bit 4 aktiviert gemischten Multicolor-Text. Nur Rohrzellen tragen
-Color-RAM-Bit 3 (`$5D`): Pixelpaar 01 nutzt `$FF16 = $77` (Gelb), 10 nutzt
-`$FF17 = $25` (Dunkelgruen), 11 nutzt die Zellfarbe `$55` (Gruen).
+Color-RAM-Bit 3: Pixelpaar 01 nutzt TED_PIPE_HIGHLIGHT ueber `$FF16`,
+10 nutzt TED_PIPE_SHADOW ueber `$FF17`, 11 nutzt TED_PIPE_COLOR ohne
+das Multicolor-Attributbit. Die Palette steht in `constants.inc`.
 Kein Rohrpixel nutzt 00, sodass der Rasterhimmel die Rohre nicht umfaerbt.
 Vogelzellen behalten Attribut `$00` und damit Hires-Aufloesung. Der Renderer
 bestimmt den Rohrstreifen aus den vorherigen Ringpuffer-Spalten; das
@@ -152,7 +153,7 @@ Zeichensatzbereich begrenzt und veraendert keine Rohr-Glyphen.
 
 Die aktuelle Fassung nutzt einen konfigurierbaren Helligkeitsverlauf, gruene Rohre
 und einen konfigurierbaren Vogel. Seine aktuelle Farbe kommt aus
-TED_BIRD_COLOR in src/hardware.inc. Folgende optionale Effekte sind noch offen.
+TED_BIRD_COLOR in src/constants.inc. Folgende optionale Effekte sind noch offen.
 Das Himmel-/Rohr-Schema arbeitet mit
 wenigen, bewusst gewaehlten TED-Farben. Zusatzeffekte duerfen das
 Frame-Budget nicht gefaehrden:
@@ -252,7 +253,7 @@ Sieben Rasterbaender teilen den aktiven Bildschirm mit konfigurierbarer Grundfar
 Luminanzen 1 bis 7. Hintergrund und Seitenrahmen wechseln bei jedem Schritt
 auf derselben Rasterzeile. Der obere Rahmen bleibt bis zum Bildschirmbeginn
 auf Luminanz 0; am Beginn des unteren Rahmens wechseln Hintergrund und Rahmen
-zunaechst auf TED-Farbe 5 mit Luminanz 1 fuer elf Pixelzeilen; danach
+zunaechst auf HUD_BACKGROUND_COLOR fuer HUD_BACKGROUND_HEIGHT Pixelzeilen; danach
 folgt der vorhandene Braunton (TED-Farbe 9 mit Luminanz 6). Spielberechnung und Bildschirmaufbau bleiben
 ausserhalb des IRQ.
 
@@ -272,7 +273,7 @@ und oberer Rand minus eins. Die Farben kommen
 aus `background_gradient_colors`, auch fuer Oberkante und Boden. Die erste Grenze entspricht
 PAL-Bildzeile `$34` und der ersten Rohrzeile. Der obere Rahmen behaelt bis
 dorthin Luminanz 0. Ab `$C4`, der ersten Rasterzeile von Zeichenzeile 24,
-tragen Hintergrund und Rahmen fuer elf Rasterzeilen die dunkelgruene
+tragen Hintergrund und Rahmen fuer elf Rasterzeilen die konfigurierte
 HUD-Farbe; ab `$CF` wieder die braune Bodenfarbe. Dieselbe IRQ setzt `$FF07`
 auf Scroll 0, nur fuer diese Zeile. Die Spielschleife schreibt den
 Spiel-Scroll im unteren Rand (`$FC`) zurueck, auch wenn der Lauf steht.
@@ -293,7 +294,7 @@ Quelldateien:
 | Datei | Verantwortung |
 | --- | --- |
 | `src/main.asm` | Einstieg, Zustandsmaschine, Build-Includes |
-| `src/hardware.inc` | TED-, Eingabe- und ROM-Konstanten |
+| `src/hardware.inc` | TED-, Eingabe- und ROM-Registeradressen |
 | `src/memory.inc` | symbolische Speicherbelegung und Puffer |
 | `src/constants.inc` | Physik-, Spiel- und Kollisionskonstanten |
 | `src/video.asm` | TED-Setup, Frame-Sync, Feinscroll, Screen-Spalten |
@@ -360,7 +361,7 @@ Bei Game-over blinkt mittig PRESS SPACE mit
 25 PAL-Frames pro Phase. Der Bestwert bleibt bei Rundenneustart bestehen
 und wird beim Programmstart geloescht. Buchstaben verwenden die gleiche
 Fuenf-Pixel-Hoehe und Zwei-Pixel-Strichstaerke wie die Ziffern. Der tote Vogel
-verwendet TED-Farbe 2 mit Luminanz 6; Neustart stellt TED_BIRD_COLOR wieder her.
+verwendet TED_BIRD_DEAD_COLOR; Neustart stellt TED_BIRD_COLOR wieder her.
 
 Eine fruehere Multicolor-Fassung bestand 3.874 Farbzugriffe in VICE. Ein
 neuer Rastertrace und Fuenf-Minuten-Dauerlauf des aktuellen Stands sowie

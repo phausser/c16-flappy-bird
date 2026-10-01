@@ -189,7 +189,9 @@ assert row(0x0c00)[14:25] == bytes(11)
 assert row(0x0c00)[:14] == visible[:14]
 assert row(0x0c00)[25:] == visible[25:]
 for _ in range(25):
+    blink_cycles = cpu.processorCycles
     call('update_footer_blink')
+    assert cpu.processorCycles - blink_cycles < 1600
 assert row(0x0c00) == visible
 put('FLAP_PRESSED', 1)
 cpu.pc = SYMBOLS['main_loop']

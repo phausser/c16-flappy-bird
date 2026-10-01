@@ -18,7 +18,7 @@ initialise_background_gradient:
     sta TED_BORDER_COLOR
     lda TED_IRQ_STATUS
     sta TED_IRQ_STATUS
-    lda #2
+    lda #TED_RASTER_IRQ_MASK
     sta TED_IRQ_ENABLE
     cli
     rts
@@ -31,14 +31,14 @@ background_gradient_irq:
     sta TED_IRQ_STATUS
 gradient_wait_visible:
     lda TED_RASTER_HORIZONTAL
-    cmp #$a0
+    cmp #GRADIENT_BLANK_THRESHOLD
     bcs gradient_wait_visible
 gradient_wait_blank:
     lda TED_RASTER_HORIZONTAL
-    cmp #$a0
+    cmp #GRADIENT_BLANK_THRESHOLD
     bcc gradient_wait_blank
 gradient_color:
-    lda #$1d
+    lda #(1 << 4) + BACKGROUND_GRADIENT_COLOR
 gradient_border_store:
     sta TED_BORDER_COLOR
 gradient_background_store:
@@ -62,11 +62,11 @@ background_gradient_top_irq:
 ; sample below $BC. Reusing $B0 can miss a late read and skip a whole line.
 gradient_top_wrap:
     lda TED_RASTER_HORIZONTAL
-    cmp #$b0
+    cmp #GRADIENT_WRAP_THRESHOLD
     bcc gradient_top_wrap
 gradient_top_fetch:
     lda TED_RASTER_HORIZONTAL
-    cmp #$bc
+    cmp #GRADIENT_FETCH_THRESHOLD
     bcs gradient_top_fetch
 gradient_top_border_store:
     stx TED_BORDER_COLOR
@@ -111,7 +111,7 @@ gradient_arm_vector:
     rti
 
 ; Character row 24 is fetched on the line before it is displayed. Enter two
-; lines early, wait out that fetch, then set the floor color and scroll 0
+; lines early, wait out that fetch, then set the HUD color and scroll 0
 ; in the same blank. No other band writes $FF07, so their color stores stay
 ; on the short path. The main loop puts the playfield scroll back at $FC.
 background_gradient_floor_irq:
@@ -123,11 +123,11 @@ background_gradient_floor_irq:
     ldx gradient_color + 1
 gradient_floor_wrap:
     lda TED_RASTER_HORIZONTAL
-    cmp #$b0
+    cmp #GRADIENT_WRAP_THRESHOLD
     bcc gradient_floor_wrap
 gradient_floor_fetch:
     lda TED_RASTER_HORIZONTAL
-    cmp #$bc
+    cmp #GRADIENT_FETCH_THRESHOLD
     bcs gradient_floor_fetch
 gradient_floor_border_store:
     stx TED_BORDER_COLOR
@@ -138,10 +138,9 @@ gradient_floor_scroll_store:
     sta TED_CONTROL2
     jmp gradient_schedule_next
 
-; Seven active bands, then the 11-line HUD strip, brown and upper border.
-; Each event supplies the
-; entire 9-bit compare and enables only raster IRQs (bit 1).
-; Band edges are shifted at most two lines to avoid the fetch pairs.
+; Active bands, HUD strip, lower border and upper border. Each event
+; supplies the full 9-bit compare and enables only raster IRQs (bit 1).
+; Changed band spacing needs a fresh check against character fetch timing.
 ; Horizontal timing assumes PAL, vertical scroll 3 and normal TED speed.
 background_gradient_colors:
     !byte (1 << 4) + BACKGROUND_GRADIENT_COLOR
@@ -164,7 +163,7 @@ background_gradient_rasters:
     !byte <(BACKGROUND_GRADIENT_BOTTOM_RASTER + HUD_BACKGROUND_HEIGHT - 1)
     !byte <(BACKGROUND_GRADIENT_TOP_RASTER - 1)
 background_gradient_high:
-    !fill BACKGROUND_GRADIENT_LEVELS, 2
-    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 2) >> 8)
-    !byte 2 | ((BACKGROUND_GRADIENT_BOTTOM_RASTER + HUD_BACKGROUND_HEIGHT - 1) >> 8)
-    !byte 2 | ((BACKGROUND_GRADIENT_TOP_RASTER - 1) >> 8)
+    !fill BACKGROUND_GRADIENT_LEVELS, TED_RASTER_IRQ_MASK
+    !byte TED_RASTER_IRQ_MASK | ((BACKGROUND_GRADIENT_BOTTOM_RASTER - 2) >> 8)
+    !byte TED_RASTER_IRQ_MASK | ((BACKGROUND_GRADIENT_BOTTOM_RASTER + HUD_BACKGROUND_HEIGHT - 1) >> 8)
+    !byte TED_RASTER_IRQ_MASK | ((BACKGROUND_GRADIENT_TOP_RASTER - 1) >> 8)

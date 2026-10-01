@@ -1,6 +1,7 @@
 SCREEN_COLUMNS = 40
 SCREEN_ROWS = 25
-; Rows 0-23 scroll. Row 24 is the floor and the score; it does not.
+SCREEN_SIZE = SCREEN_COLUMNS * SCREEN_ROWS
+; Rows 0-23 scroll. Row 24 holds the fixed HIGH/title/SCORE HUD.
 PLAYFIELD_ROWS = 24
 SCORE_ROW = 24
 
@@ -21,8 +22,7 @@ BG_GRADIENT_START_COLOR = (0 << 4) + BACKGROUND_GRADIENT_COLOR
 BACKGROUND_GRADIENT_LEVELS = 7
 ; VICE normal PAL canvas starts at TED raster $113; active text starts at $04.
 BACKGROUND_GRADIENT_TOP_RASTER = $113
-; First raster of character row 24. Floor color and scroll 0 start here,
-; eight pixels above the lower border that used to begin at $CC.
+; First raster of character row 24: HUD background and scroll 0 start here.
 BACKGROUND_GRADIENT_BOTTOM_RASTER = $c4
 HUD_BACKGROUND_COLOR = (5 << 4) + 9
 HUD_BACKGROUND_HEIGHT = 11
@@ -91,3 +91,60 @@ BIRD_MAX_FALL_SPEED = 3
 !if BACKGROUND_GRADIENT_BOTTOM_RASTER <> $04 + SCORE_ROW * 8 {
     !error "floor raster must be the first line of the score row"
 }
+
+; Video mode and palette configuration. Register addresses are in hardware.inc.
+; Bits 0-2 = vertical scroll 3. Scroll 0 shifts the matrix up and opens
+; three scanlines below the playfield; the TED paints the bytes past the
+; screen matrix there (a light bar, and on some offsets a black block).
+; Bit 3 = 25 rows. Bit 4 = display on.
+TED_CONTROL1_TEXT_25_ROWS = $1b
+; Bit 3 clear = 38 columns. The border then covers eight pixels on each
+; side, which is where a horizontal scroll would otherwise show the partial
+; column. The screen matrix stays 40 bytes wide; columns 0 and 39 are the
+; hidden guards. Bit 7 stays clear: set, it switches the TED into
+; 256-character mode and the chargen base then moves in 2 KiB steps, so
+; $3400 cannot be addressed and $0D aliases onto colour RAM at $0800.
+; Bit 4 enables mixed multicolor text. Color-RAM bit 3 selects each cell.
+TED_CONTROL2_TEXT_38_COLS = $10
+
+TED_BLUE = $6d
+
+TED_SKY_COLOR = TED_BLUE
+; Pipe pairs: 01 = highlight, 10 = shadow, 11 = base color.
+; Attribute bit 3 enables multicolor; the bird keeps it clear for hires.
+TED_PIPE_HIGHLIGHT = (6 << 4) + 5
+TED_PIPE_SHADOW = (3 << 4) + 5
+TED_PIPE_COLOR = (4 << 4) + 5 | $08
+
+; Live bird: TED hue 7, luminance 7. Dead bird: hue 4, luminance 7.
+; Both use hires attributes (color bit 3 clear).
+TED_BIRD_COLOR = (7 << 4) + 7
+TED_BIRD_DEAD_COLOR = (7 << 4) + 4
+; Score digits are hires white (luminance 7, color 1). Color-RAM bit 3
+; stays clear, so the digits do not use the pipe multicolor palette.
+TED_SCORE_COLOR = (7 << 4) + 1
+
+; HUD layout uses the 38 visible columns between the two guard columns.
+HUD_VISIBLE_LEFT = 1
+HUD_VISIBLE_RIGHT = SCREEN_COLUMNS - 2
+HUD_BLINK_TICKS = 25
+HUD_MIN_DIGITS = 4
+SCORE_MAX_DIGITS = 5
+SCORE_FIFTH_DIGIT_THRESHOLD = 10000
+HUD_HIGH_LABEL_LENGTH = 4
+HUD_SCORE_LABEL_LENGTH = 5
+HUD_TITLE_LENGTH = 10
+HUD_PROMPT_LENGTH = 11
+HUD_TITLE_COLUMN = HUD_VISIBLE_LEFT + (SCREEN_COLUMNS - 2 - HUD_TITLE_LENGTH) / 2
+HUD_PROMPT_COLUMN = HUD_VISIBLE_LEFT + (SCREEN_COLUMNS - 2 - HUD_PROMPT_LENGTH) / 2
+HUD_CLEAR_WIDTH = HUD_PROMPT_LENGTH
+
+; PAL horizontal synchronization thresholds; these are cycle-sensitive.
+GRADIENT_BLANK_THRESHOLD = $a0
+GRADIENT_WRAP_THRESHOLD = $b0
+GRADIENT_FETCH_THRESHOLD = $bc
+TED_RASTER_IRQ_MASK = 2
+SPACE_KEY_ROW_MASK = $7f
+SPACE_KEY_COLUMN_MASK = $10
+PIPE_LFSR_FEEDBACK = $1d
+PIPE_GAP_STEP_MASK = 3

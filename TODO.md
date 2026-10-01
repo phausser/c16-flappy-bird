@@ -128,11 +128,14 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 - [x] HUD: HIGH mit Sitzungsbestwert links, TEDDY BIRD mittig, SCORE rechts;
   vierstellige Zahlen mit fuehrenden Nullen (fuenf Stellen oberhalb 9999).
 - [x] PRESS SPACE blinkt mittig bei Game-over; Bestwert ueberlebt Rundenneustart.
-- [x] Toten Vogel auf TED-Farbe 2, Luminanz 6 setzen; normale Farbe beim Neustart.
+- [x] Toten Vogel mit TED_BIRD_DEAD_COLOR zeichnen; normale Farbe beim Neustart.
 - [x] HUD-Ausgabe nach Scroll-/Vogel-Ausgabe verschieben, damit Punkteereignisse
   den zeitkritischen Pufferwechsel nicht verzoegern.
 - [x] Bei Punkten nur die seitlichen Score-Felder mit direkten Pufferadressen
   aktualisieren; kein Loeschen/Neuzeichnen des mittleren Textes.
+
+- [x] Konfiguration in constants.inc zentralisieren und veraltete Kommentare bereinigen.
+- [x] Beim Blinken nur die Mitte zeichnen; Vogelfarbe einmal pro Zeichenvorgang waehlen.
 
 ## Technische Risiken und Entscheidungen
 

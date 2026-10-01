@@ -16,8 +16,9 @@
 ; Glyphs 4-15 are the dynamic hires bird area
 ; (four columns, each with three rows). Only accepted candidate
 ; glyphs are copied here; collision probes never modify the live charset.
-; Two-bit pixels: green/yellow/green/yellow, yellow/green/green/green,
-; dark/green/dark/dark. Repeat vertically between the end caps.
+; Two-bit pixels select base/highlight/base/highlight,
+; highlight/base/base/base, shadow/base/shadow/shadow. Palette values are
+; configured in constants.inc; the body repeats between the end caps.
 
 ; Pipe body glyph 1 (left)
     !byte %11011101
@@ -169,7 +170,7 @@
     !byte %00000000
     !byte %00000000
 ; Glyphs 16-25. The ink sits in the lower five pixels, with two-pixel
-; strokes and square corners. Bit 7 is the leftmost pixel.
+; strokes in the initial design. Bit 7 is the leftmost pixel.
 digit_glyphs:
 
 ; Digit 0
@@ -312,7 +313,7 @@ digit_glyphs:
     !byte %10111010
     !byte %10111010
     !byte %10101010
-; A-Z: five-pixel-high lettering with the digits' two-pixel strokes.
+; A-Z: editable hires letters; eight binary rows per glyph.
 
 ; Letter A
     !byte %00000000
@@ -330,7 +331,7 @@ digit_glyphs:
     !byte %00000000
     !byte %01111110
     !byte %01100110
-    !byte %01111000
+    !byte %01111100
     !byte %01100110
     !byte %01111110
 

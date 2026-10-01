@@ -37,10 +37,10 @@ randomise_gap:
     lda PIPE_RANDOM_STATE
     asl
     bcc random_gap_ready
-    eor #$1d
+    eor #PIPE_LFSR_FEEDBACK
 random_gap_ready:
     sta PIPE_RANDOM_STATE
-    and #3
+    and #PIPE_GAP_STEP_MASK
     tax
     lda PIPE_CURRENT_GAP
     clc

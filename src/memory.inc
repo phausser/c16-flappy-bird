@@ -1,5 +1,5 @@
-; Stock C16 memory map. The program and charset deliberately stay below $4000,
-; the first BASIC ROM address on a 16 KiB machine.
+; Stock C16 memory map. Program, buffers and charset stay below $4000,
+; the end of the physical 16 KiB RAM (higher RAM addresses mirror it).
 ;
 ; $0004-$003f  Scroll state, buffer pointers, screen-copy pointers, and
 ;              bird physics/rendering state
@@ -14,7 +14,7 @@
 ; $3100-$313f  Gap start per world column, 64-column ring
 ; $3140-$3147  Generator state and renderer scratch
 ; $3148-$33ff  Reserved
-; $3400-$3bff  RAM-resident 256-glyph character set
+; $3400-$3bff  Character-set storage; TED uses the lower 128 glyphs
 ; $3c00-$3ffd  Safety reserve
 ; $3ffe-$3fff  Hardware IRQ vector (16 KiB mirror of $fffe-$ffff)
 
@@ -27,8 +27,6 @@ BACK_COLOR_RAM = $1800
 BACK_SCREEN_RAM = $1c00
 FRONT_VIDEO_PTR = $0c
 BACK_VIDEO_PTR = $18
-SCREEN_SIZE = 1000
-SCREEN_PAGE_COUNT = 4
 
 GAME_STATE_RAM = $3000
 GAME_OVER = GAME_STATE_RAM
@@ -75,6 +73,7 @@ CHARSET_SIZE = $0800
 RAM_RESERVE_START = $3c00
 RAM_RESERVE_SIZE = $0400
 
+SCORE_CODE_START = $2000
 PROGRAM_START = $1001
 CODE_START = $100d
 

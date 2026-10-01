@@ -1,3 +1,14 @@
+; This helper lives in the upper code segment to keep the main segment
+; below the hidden screen buffer. Select color once for all bird cells.
+select_bird_color:
+    lda #TED_BIRD_COLOR
+    ldx GAME_OVER
+    beq bird_color_ready
+    lda #TED_BIRD_DEAD_COLOR
+bird_color_ready:
+    sta CELL_COLOR
+    rts
+
 ; One point when the bird's column passes the right edge of a pipe.
 ; swap_buffers has already advanced WORLD_COLUMN. The cell now one column
 ; behind the bird is that edge when it holds a gap and the next ring cell
@@ -63,23 +74,23 @@ high_score_ready:
     lda SCORE + 1
     sta SCORE_WORK + 1
 render_footer_number:
-    ldx #4
+    ldx #HUD_MIN_DIGITS
     lda SCORE_WORK + 1
-    cmp #$27
+    cmp #>SCORE_FIFTH_DIGIT_THRESHOLD
     bcc score_places_known
     bne score_places_five
     lda SCORE_WORK
-    cmp #$10
+    cmp #<SCORE_FIFTH_DIGIT_THRESHOLD
     bcc score_places_known
 score_places_five:
     inx
 score_places_known:
     stx SCORE_PLACES
-    lda #1
+    lda #HUD_VISIBLE_LEFT
     sta COLUMN_X
     lda HUD_NUMBER
     bne footer_label_start
-    lda #SCREEN_COLUMNS - 7
+    lda #HUD_VISIBLE_RIGHT - HUD_SCORE_LABEL_LENGTH
     sec
     sbc SCORE_PLACES
     sta COLUMN_X
@@ -101,10 +112,10 @@ footer_label_plot:
     inc HUD_TEXT_INDEX
     lda HUD_NUMBER
     beq footer_score_length
-    lda #4
+    lda #HUD_HIGH_LABEL_LENGTH
     bne footer_label_length
 footer_score_length:
-    lda #5
+    lda #HUD_SCORE_LABEL_LENGTH
 footer_label_length:
     cmp HUD_TEXT_INDEX
     bne footer_label_next
@@ -118,7 +129,7 @@ footer_label_length:
     sta BACK_COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
     inc COLUMN_X
 footer_number_positioned:
-    lda #5
+    lda #SCORE_MAX_DIGITS
     sec
     sbc SCORE_PLACES
     tax
@@ -149,7 +160,7 @@ score_digit_ready:
     tax
     inc COLUMN_X
     inx
-    cpx #5
+    cpx #SCORE_MAX_DIGITS
     bcc score_next_digit
     lda HUD_NUMBER
     bne footer_numbers_done
@@ -165,21 +176,38 @@ footer_numbers_done:
 update_footer_blink:
     inc HUD_TIMER
     lda HUD_TIMER
-    cmp #25
+    cmp #HUD_BLINK_TICKS
     bcc footer_blink_done
     lda #0
     sta HUD_TIMER
     lda HUD_BLINK
     eor #1
     sta HUD_BLINK
-    jsr render_score
+    jsr clear_footer_title
+    jsr render_footer_text
 footer_blink_done:
     rts
 
+; Blinking changes only the center text, leaving both counters untouched.
+clear_footer_title:
+    ldy #HUD_PROMPT_COLUMN + HUD_CLEAR_WIDTH - 1
+    lda #0
+clear_footer_title_cell:
+    sta SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_SCREEN_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    sta BACK_COLOR_RAM + SCORE_ROW * SCREEN_COLUMNS,y
+    dey
+    cpy #HUD_PROMPT_COLUMN - 1
+    bne clear_footer_title_cell
+    rts
+
 render_footer_text:
-    lda #15
-    sec
-    sbc GAME_OVER
+    lda #HUD_TITLE_COLUMN
+    ldx GAME_OVER
+    beq footer_title_positioned
+    lda #HUD_PROMPT_COLUMN
+footer_title_positioned:
     sta COLUMN_X
     lda #0
     sta HUD_TEXT_INDEX
@@ -201,11 +229,11 @@ footer_text_plot:
     lda HUD_TEXT_INDEX
     ldx GAME_OVER
     bne footer_prompt_length
-    cmp #10
+    cmp #HUD_TITLE_LENGTH
     bcc footer_text_next
     rts
 footer_prompt_length:
-    cmp #11
+    cmp #HUD_PROMPT_LENGTH
     bcc footer_text_next
 footer_text_done:
     rts

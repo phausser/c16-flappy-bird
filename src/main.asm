@@ -15,7 +15,7 @@ basic_end:
 
 ; IRQ stays masked during setup. The raster gradient later installs its
 ; handler through the hardware IRQ vector; that handler touches only TED color
-; and compare registers plus its dedicated gradient state.
+; and compare registers, HUD scroll and its dedicated gradient state.
 start:
     sei
     jsr initialise_input
@@ -88,9 +88,9 @@ draw_accepted_bird:
     !error "program overlaps the hidden text buffer"
 }
 
-; Score drawing lives above the hidden text buffer. The imported masks follow
-; it; both stay below the game-state RAM at $3000.
-* = $2000
+; HUD code and the bird-color helper live above the hidden text buffer.
+; Imported masks follow; all stay below the game-state RAM.
+* = SCORE_CODE_START
 !source "src/score.asm"
 !source "src/bird_masks.inc"
 !if * > GAME_STATE_RAM {

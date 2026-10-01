@@ -11,11 +11,11 @@ initialise_input:
 read_input:
     lda #0
     sta FLAP_PRESSED
-    lda #$7f
+    lda #SPACE_KEY_ROW_MASK
     sta TED_KEYBOARD_ROW
     sta TED_KEYBOARD
     lda TED_KEYBOARD
-    and #$10
+    and #SPACE_KEY_COLUMN_MASK
     bne flap_released
 
     lda FLAP_HELD

@@ -11,7 +11,8 @@ scrolling. Numbers have four places with leading zeros (five above 9999).
 On game over, “PRESS SPACE” replaces the centered title and alternates visible/hidden every 25 PAL frames. The best score
 survives round restarts and resets when the program starts. The lettering
 uses the digits' five-pixel height and two-pixel strokes. On death the bird
-uses TED color 2 at luminance 6 (`$62`); restarting restores `TED_BIRD_COLOR`.
+uses `TED_BIRD_DEAD_COLOR`; restarting restores `TED_BIRD_COLOR`. Both
+colors are configured in `src/constants.inc`.
 The RAM character set lives in `src/font.inc`: letters, digits and pipe
 glyphs use one binary byte per line. Eight consecutive lines form a glyph;
 bit 7 is the leftmost pixel. Dynamic bird glyphs are reserved there and
@@ -22,14 +23,15 @@ colors untouched.
 The pipes use the exact 24-pixel stripe layout from
 [assets/pipe.png](assets/pipe.png). Its top eight pixels form the end caps
 beside the gap; the remaining stripe pattern repeats along the bodies.
-Three multicolor glyphs provide yellow highlights (`$77`), green (`$55`) and
-dark green (`$25`) using the TED palette. The bird remains hires; its TED
-color is set by `TED_BIRD_COLOR` in `src/hardware.inc`. The sky hue is set by
+Three multicolor glyphs select `TED_PIPE_HIGHLIGHT`, `TED_PIPE_COLOR` and
+`TED_PIPE_SHADOW` from the palette in `src/constants.inc`. The bird remains hires; its TED
+color is set by `TED_BIRD_COLOR` in `src/constants.inc`. The sky hue is set by
 `BACKGROUND_GRADIENT_COLOR` (currently TED color 6), with luminance 1–7.
 The upper border uses luminance 0. Band spacing is set by
 `BACKGROUND_GRADIENT_DISTANCE` (currently 28 lines). Color 9 at luminance 6
 covers the lower border after the HUD. The HUD background starts at TED
-line `$C4` in color 5 at luminance 1 (`$15`) for exactly 11 raster lines;
+line `$C4` in `HUD_BACKGROUND_COLOR` (currently color 9, luminance 5)
+for exactly `HUD_BACKGROUND_HEIGHT` raster lines (currently 11);
 the existing brown begins at `$CF`. The HUD-entry IRQ sets horizontal scroll to 0
 for the score row only; the game loop restores the playfield scroll at line
 `$FC`. The active screen occupies TED raster-counter lines `$04` through
@@ -47,8 +49,10 @@ is still open; see [TODO.md](TODO.md). Score changes set `HUD_DIRTY` during
 the buffer flip; only the numeric side fields are refreshed after scroll
 copying and bird rendering. Fixed HUD cells are written directly into both
 buffers, avoiding per-character row-pointer calculations. At score 1234,
-the incremental update uses 2,628 CPU cycles versus 9,242 for the previous
-full redraw. The centered title stays untouched by scoring. This keeps the approximately 1.92-second scoring events from
+the incremental update uses 2,636 CPU cycles versus 9,242 for the previous
+full redraw. The centered title stays untouched by scoring. Blinking also updates only
+the center text: about 1,400 CPU cycles when shown and 400 when hidden.
+The bird color is selected once per render rather than per occupied cell. This keeps the approximately 1.92-second scoring events from
 delaying the time-critical top-row updates. The scroll timing is specified
 in [SPEC.md](SPEC.md).
 
@@ -113,3 +117,12 @@ python tests/gradient.py build/raster.log
 
 VICE exits with status 1 when the requested cycle limit is reached. Keep the
 log paired with the exact build: the checker uses its symbol addresses.
+
+## Source conventions
+
+`hardware.inc` holds register addresses and `memory.inc` the RAM layout.
+Game tuning, palette, HUD layout, keyboard masks and raster thresholds are
+in `constants.inc`. Font bytes remain in `font.inc`; animation frame count
+is asset metadata generated in `bird_masks.inc`. Literal flags, byte/bit
+operations and encoded asset data stay beside the code that uses them.
+Commit messages follow Conventional Commits; see [AGENTS.md](AGENTS.md).

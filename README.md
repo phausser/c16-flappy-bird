@@ -7,7 +7,7 @@ Space flaps. Each pipe you clear scores one point. Release Space and press
 it again to restart. The fixed bottom row shows HIGH with the session best on the left, TEDDY BIRD
 in the center and SCORE with the current score on the right. Numbers use
 leading zeros to fill four places (five above 9999). On game over, PRESS SPACE
-blinks in the center and the bird turns TED color 2 at luminance 6. The best score survives round restarts.
+blinks in the center and the bird uses `TED_BIRD_DEAD_COLOR`. The best score survives round restarts.
 
 Play it in the browser: https://phausser.github.io/c16-flappy-bird/
 
