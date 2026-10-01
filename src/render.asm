@@ -57,6 +57,17 @@ paint_row:
     bcc store_cell
 pipe_body_cell:
     lda PIPE_RENDER_GLYPH
+    cpy PIPE_RENDER_GAP_END
+    beq pipe_cap_cell
+    ldx PIPE_HERE
+    dex
+    stx CELL_GLYPH
+    cpy CELL_GLYPH
+    bne pipe_cell_glyph_ready
+pipe_cap_cell:
+    clc
+    adc #GLYPH_PIPE_CAP_LEFT - GLYPH_PIPE_LEFT
+pipe_cell_glyph_ready:
     sta CELL_GLYPH
     lda #TED_PIPE_COLOR
     sta CELL_COLOR

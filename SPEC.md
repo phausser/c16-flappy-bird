@@ -64,12 +64,14 @@ geprueft; keinerlei magische Adressen in der Spiellogik.
 
 ### Dreifarbige Rohre
 
-`assets/pipe.png` ist die 24 x 24 Pixel grosse Referenz. Jede ihrer Zeilen
-enthaelt dieselben zwoelf Doppelpixel. Die drei Rohrglyphen 1-3 wiederholen
+`assets/pipe.png` ist die 24 x 24 Pixel grosse Referenz. Die oberen acht
+Pixel bilden den Abschluss an beiden Seiten der Durchflugluecke; beim
+oberen Rohr wird er vertikal gespiegelt. Die restlichen Zeilen enthalten
+dieselben zwoelf Doppelpixel. Die drei Rohrglyphen 1-3 wiederholen
 die Bytes `$DD`, `$7F` und `$BA` jeweils achtmal. Von links nach rechts lautet
 die Farbfolge: Gruen, Gelb, Gruen, Gelb / Gelb, Gruen, Gruen, Gruen /
 Dunkelgruen, Gruen, Dunkelgruen, Dunkelgruen. Oben und unten bleiben die
-Rohrenden gerade; separate Kappen gibt es derzeit nicht.
+Rohrkoerper gerade; drei separate Kappenglyphen folgen den Ziffernglyphen.
 
 `$FF07` Bit 4 aktiviert gemischten Multicolor-Text. Nur Rohrzellen tragen
 Color-RAM-Bit 3 (`$5D`): Pixelpaar 01 nutzt `$FF16 = $77` (Gelb), 10 nutzt

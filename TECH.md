@@ -10,7 +10,8 @@ centered, without scrolling. Empty bird cells leave the environment and its
 colors untouched.
 
 The pipes use the exact 24-pixel stripe layout from
-[assets/pipe.png](assets/pipe.png), repeated vertically without end caps.
+[assets/pipe.png](assets/pipe.png). Its top eight pixels form the end caps
+beside the gap; the remaining stripe pattern repeats along the bodies.
 Three multicolor glyphs provide yellow highlights (`$77`), green (`$55`) and
 dark green (`$25`) using the TED palette. The bird remains hires; its TED
 color is set by `TED_BIRD_COLOR` in `src/hardware.inc`. The sky uses a blue

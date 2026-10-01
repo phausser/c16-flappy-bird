@@ -45,7 +45,7 @@ def mask(name):
     cpu.memory[SYMBOLS['MASK_POINTER'] + 1] = address >> 8
 
 
-MASKS = tuple(f'BIRD_MASK_{i}' for i in range(4))
+MASKS = tuple(f'BIRD_MASK_{i}' for i in range(SYMBOLS['BIRD_FRAME_COUNT']))
 PIXELS = {}
 for name in MASKS:
     data = cpu.memory[SYMBOLS[name]:SYMBOLS[name] + 42]
@@ -190,8 +190,8 @@ for _ in range(39):
     put('BIRD_VELOCITY', 3)
     call('select_bird_mask')
     sequence.append(get('MASK_POINTER') | cpu.memory[SYMBOLS['MASK_POINTER'] + 1] << 8)
-assert sequence == [SYMBOLS[MASKS[(tick // 5) % 4]] for tick in range(40)]
-print('Four-frame GIF order and 100 ms cadence passed', flush=True)
+assert sequence == [SYMBOLS[MASKS[(tick // 5) % len(MASKS)]] for tick in range(40)]
+print(f'{len(MASKS)}-frame GIF order and 100 ms cadence passed', flush=True)
 
 # CPU-only frame harness: keep input/raster externally controlled.
 for name in ('wait_for_frame', 'read_input', 'commit_video_ptr'):
@@ -232,6 +232,14 @@ for world, start, velocity, expected, name in (
 ):
     for phase in range(8):
         scene(world, phase)
+        direction = 1 if velocity > 0 else -1
+        # Locate the contact edge for the current artwork, rather than
+        # retaining pixel coordinates from an older bird silhouette.
+        while oracle(name, expected, world, phase, 0):
+            expected -= direction
+        while not oracle(name, expected + direction, world, phase, 0):
+            expected += direction
+        start = expected - direction
         position(start, velocity, name)
         max_cycles = max(max_cycles, frame())
         assert get('GAME_OVER') == 1, (world, start, phase)
@@ -246,13 +254,18 @@ for world, start, velocity, expected, name in (
         assert get('GAME_OVER') == 0 and get('BIRD_Y_POSITION') == 80
         assert get('SCROLL_OFFSET') == 7
 
-# A downward wing pose would intersect the pipe; retain the safe old pose.
+# A wing change would intersect the pipe; retain the safe old pose.
+pose_edge = next((name, y) for index, name in enumerate(MASKS)
+                 for y in range(192)
+                 if not oracle(name, y, 12, 7, 1)
+                 and oracle(MASKS[(index + 1) % len(MASKS)], y, 12, 7, 0))
+name, y = pose_edge
 scene(12)
-position(115, 0, 'BIRD_MASK_2')
+position(y, 0, name)
 put('BIRD_ANIM_TIMER', 0)
 frame()
 assert get('GAME_OVER') == 0
-assert get('MASK_POINTER') == SYMBOLS['BIRD_MASK_2'] & 255
+assert get('MASK_POINTER') == SYMBOLS[name] & 255
 
 # Fly horizontally into a pipe. At impact the last visible pixel is exactly
 # one pixel left of its solid cell face, and a further scroll is rejected.
@@ -269,8 +282,10 @@ for initial_world in range(8):
     else:
         raise AssertionError('pipe was not hit')
     world, phase = get('WORLD_COLUMN'), get('SCROLL_OFFSET')
-    assert not oracle('BIRD_MASK_0', 32, world, phase, 0)
-    assert oracle('BIRD_MASK_0', 32, world, phase, 1)
+    pointer = get('MASK_POINTER') | cpu.memory[SYMBOLS['MASK_POINTER'] + 1] << 8
+    name = next(name for name in MASKS if SYMBOLS[name] == pointer)
+    assert not oracle(name, 32, world, phase, 0)
+    assert oracle(name, 32, world, phase, 1)
     pipe_col = next(col for col in range(12, 40) if WORLD_GAPS[world + col])
-    assert pipe_col * 8 + phase == 123
+    assert pipe_col * 8 + phase == 12 * 8 + 7 + max(x for x, y in PIXELS[name]) + 1
 print(f'Sweep, contact, animation, freeze and restart passed; max frame CPU cycles: {max_cycles}')

@@ -64,6 +64,8 @@ def expected_cell(world, row, col):
     gap = columns[world + col]
     if gap and (row < gap or row >= gap + 9):
         glyph = S['GLYPH_PIPE_LEFT'] + (world + col - S['PIPE_FIRST_COLUMN']) % S['PIPE_SPACING_COLUMNS']
+        if row in (gap - 1, gap + S['PIPE_GAP_HEIGHT']):
+            glyph += S['GLYPH_PIPE_CAP_LEFT'] - S['GLYPH_PIPE_LEFT']
         return glyph, S['TED_PIPE_COLOR']
     return S['GLYPH_SKY'], S['TED_SKY_COLOR']
 
@@ -107,7 +109,7 @@ assert get('TED_COLOR_MC1') == S['TED_PIPE_HIGHLIGHT']
 assert get('TED_COLOR_MC2') == S['TED_PIPE_SHADOW']
 assert S['TED_PIPE_COLOR'] & 8 and not S['TED_BIRD_COLOR'] & 8
 assert S['TED_BIRD_COLOR'] == 0x77
-# Reference's twelve doubled pixels, with no sky pixels or end-cap rows.
+# Reference's twelve doubled pixels in the pipe body.
 expected_pairs = [3, 1, 3, 1, 1, 3, 3, 3, 2, 3, 2, 2]
 for y in range(8):
     actual_pairs = []
@@ -115,6 +117,14 @@ for y in range(8):
         row = cpu.memory[S['CHARSET_RAM'] + glyph * 8 + y]
         actual_pairs.extend((row >> shift) & 3 for shift in (6, 4, 2, 0))
     assert actual_pairs == expected_pairs
+for y in range(8):
+    expected = ([2, 3, 2, 3, 3, 2, 2, 2, 2, 2, 2, 2]
+                if y in (0, 7) else expected_pairs)
+    actual = []
+    for glyph in range(S['GLYPH_PIPE_CAP_LEFT'], S['GLYPH_PIPE_CAP_LEFT'] + 3):
+        value = cpu.memory[S['CHARSET_RAM'] + glyph * 8 + y]
+        actual.extend((value >> shift) & 3 for shift in (6, 4, 2, 0))
+    assert actual == expected
 call('initialise_obstacles')
 call('render_playfield')
 call('mirror_playfield_to_back')

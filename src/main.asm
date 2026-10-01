@@ -92,7 +92,7 @@ draw_accepted_bird:
 ; (four columns, each with three rows). Only accepted candidate
 ; glyphs are copied here; collision probes never modify the live charset.
 ; Two-bit pixels: green/yellow/green/yellow, yellow/green/green/green,
-; dark/green/dark/dark. Repeat vertically without end caps.
+; dark/green/dark/dark. Repeat vertically between the end caps.
 !fill 8, %11011101
 !fill 8, %01111111
 !fill 8, %10111010
@@ -116,4 +116,12 @@ digit_glyphs:
 !if * - digit_glyphs <> 80 {
     !error "score digits must be ten glyphs"
 }
+; Top eight pixels of assets/pipe.png. The cap is vertically symmetric,
+; so the same three glyphs close both pipes next to the gap.
+!if * <> CHARSET_RAM + GLYPH_PIPE_CAP_LEFT * 8 {
+    !error "pipe caps must follow the score digits"
+}
+    !byte $bb, $dd, $dd, $dd, $dd, $dd, $dd, $bb
+    !byte $ea, $7f, $7f, $7f, $7f, $7f, $7f, $ea
+    !byte $aa, $ba, $ba, $ba, $ba, $ba, $ba, $aa
 !fill CHARSET_SIZE - (* - CHARSET_RAM), 0
