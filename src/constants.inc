@@ -9,9 +9,9 @@ INITIAL_SCROLL_OFFSET = 7
 ; Number of frames per column shift, and the pieces the hidden buffer is
 ; filled in. One piece per frame stays far shorter than the border.
 SCROLL_SLICE_COUNT = 8
-; PAL raster line in the lower border, after the score row ($C4-$CB).
-; The scroll register and the buffer flip are stored here.
-RASTER_BORDER = $fc
+; Begin publishing immediately after the last HUD character pixel.
+; The earlier border window keeps bird writes ahead of the top-row fetch.
+RASTER_BORDER = $cc
 ; TED raster-counter coordinates: active 25-row screen is $04..$CB.
 ; Match the first visible character row.
 BACKGROUND_GRADIENT_FIRST_RASTER = $04

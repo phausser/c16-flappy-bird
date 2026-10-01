@@ -34,7 +34,7 @@ line `$C4` in `HUD_BACKGROUND_COLOR` (currently color 9, luminance 5)
 for exactly `HUD_BACKGROUND_HEIGHT` raster lines (currently 11);
 the existing brown begins at `$CF`. The HUD-entry IRQ sets horizontal scroll to 0
 for the score row only; the game loop restores the playfield scroll at line
-`$FC`. The active screen occupies TED raster-counter lines `$04` through
+`$CC`. The active screen occupies TED raster-counter lines `$04` through
 `$CB`. The handler owns the hardware IRQ with ROM banked out and returns
 directly with `RTI`. It prepares each color in advance, normally enters one
 line before the boundary, and uses `$FF1E` to place both color writes in the
@@ -126,3 +126,26 @@ in `constants.inc`. Font bytes remain in `font.inc`; animation frame count
 is asset metadata generated in `bird_masks.inc`. Literal flags, byte/bit
 operations and encoded asset data stay beside the code that uses them.
 Commit messages follow Conventional Commits; see [AGENTS.md](AGENTS.md).
+
+## Bird publication timing
+
+The display-update window starts at TED raster `$CC`, immediately after
+HUD row 24, rather than `$FC`. A PAL VICE trace with the bird held near the
+top (Y=8), covering 77 publication events and all animation/scroll phases,
+showed the old output reaching visible raster lines 48–60. With the earlier
+window, all publications completed by line 290, before active text starts
+at line 4 of the next raster-counter cycle. The test changes only bird
+physics through monitor commands; the normal game PRG is used.
+
+Reproduce with `python3 tools/bird_timing.py` after `make`, then:
+
+```sh
+xplus4 -console +sound -model c16pal -ramsize 16 \
+  -autostartprgmode 1 -autostart-delay 1 -autostart-warp \
+  -autostart build/flappy.prg -moncommands build/bird-timing.mon \
+  -monlog -monlogname build/bird-timing.log -limitcycles 6000000
+python3 tools/bird_timing.py build/bird-timing.log
+```
+
+Use a fresh VICE process so checkpoint numbering starts at 1. As with the
+color trace, reaching the cycle limit produces exit status 1.

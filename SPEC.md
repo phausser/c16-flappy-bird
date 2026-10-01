@@ -99,7 +99,7 @@ Spielfeldzeilen 0-23 (erst Zeichen, dann Farbe) in acht Stuecken
 mit bis zu sieben Zeilen in den versteckten Puffer. Zeile 24 fehlt in dieser Liste.
 Acht der 56 Plaetze bleiben leer; die neue rechte Spalte entsteht, wenn das achte Stueck fertig ist.
 Im Frame vor dem Umbruch erhaelt Spalte 39 des versteckten Puffers die
-naechste Weltspalte. Im unteren Rand (Raster `$FC`) schreibt der Umbruch nur
+naechste Weltspalte. Im unteren Rand (Raster `$CC`) schreibt der Umbruch nur
 noch Scroll zurueck auf 7 und `$FF14` auf den fertigen Puffer. Acht Pixel
 Matrix nach links und sieben Pixel Scroll nach rechts ergeben ein Pixel
 nach links.
@@ -237,7 +237,7 @@ reset/init
        input
        physics (Kandidatenposition)
        collision -> bei Treffer bis zum letzten freien Pixel korrigieren
-       frame-sync auf der aufsteigenden Flanke von Raster $FC
+       frame-sync auf der aufsteigenden Flanke von Raster $CC
        bisheriges Vogelbild loeschen
        neue Rohrspalte bei Bedarf erzeugen
        $FF07 schreiben, beim Umbruch auch $FF14
@@ -276,7 +276,7 @@ dorthin Luminanz 0. Ab `$C4`, der ersten Rasterzeile von Zeichenzeile 24,
 tragen Hintergrund und Rahmen fuer elf Rasterzeilen die konfigurierte
 HUD-Farbe; ab `$CF` wieder die braune Bodenfarbe. Dieselbe IRQ setzt `$FF07`
 auf Scroll 0, nur fuer diese Zeile. Die Spielschleife schreibt den
-Spiel-Scroll im unteren Rand (`$FC`) zurueck, auch wenn der Lauf steht.
+Spiel-Scroll im unteren Rand (`$CC`) zurueck, auch wenn der Lauf steht.
 
 Normale Baender starten den IRQ eine Zeile vorher und synchronisieren ueber
 `$FF1E` auf die horizontale Austastluecke. Die erste Grenze benoetigt einen

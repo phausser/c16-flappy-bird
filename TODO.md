@@ -137,6 +137,9 @@ fuenf Minuten stabil und erfuellt alle Akzeptanzkriterien.
 - [x] Konfiguration in constants.inc zentralisieren und veraltete Kommentare bereinigen.
 - [x] Beim Blinken nur die Mitte zeichnen; Vogelfarbe einmal pro Zeichenvorgang waehlen.
 
+- [x] Vogel-Ausgabe bei oberer Position per VICE-Trace messen und auf `$CC`
+  vorziehen; 77 Ausgaben enden vor dem sichtbaren Bildbeginn.
+
 ## Technische Risiken und Entscheidungen
 
 | Risiko | Gegenmassnahme |

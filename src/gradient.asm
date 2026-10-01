@@ -113,7 +113,7 @@ gradient_arm_vector:
 ; Character row 24 is fetched on the line before it is displayed. Enter two
 ; lines early, wait out that fetch, then set the HUD color and scroll 0
 ; in the same blank. No other band writes $FF07, so their color stores stay
-; on the short path. The main loop puts the playfield scroll back at $FC.
+; on the short path. The main loop puts the playfield scroll back at $CC.
 background_gradient_floor_irq:
     pha
     lda TED_IRQ_STATUS
