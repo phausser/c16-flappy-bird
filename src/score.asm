@@ -36,6 +36,8 @@ award_draw:
     ; and bird writes are finished, keeping the top rows on schedule.
     lda #1
     sta HUD_DIRTY
+    lda #SOUND_POINT
+    sta SOUND_REQUEST
 award_done:
     rts
 

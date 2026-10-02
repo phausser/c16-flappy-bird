@@ -339,7 +339,7 @@ Ausfuehrungszeit sichtbar.
 
 ## Nicht im ersten Release
 
-- Musik oder digitalisierte Effekte
+- Musik oder digitalisierte Effekte (drei kurze TED-Effekte sind enthalten)
 - Mehrspielermodus
 - Persistenter Bestwert auf Diskette/Kassette
 - NTSC-spezifisches Timing

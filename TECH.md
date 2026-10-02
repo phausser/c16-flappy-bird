@@ -60,6 +60,28 @@ The bird color is selected once per render rather than per occupied cell. This k
 delaying the time-critical top-row updates. The scroll timing is specified
 in [SPEC.md](SPEC.md).
 
+## Sound
+
+[src/sound.asm](src/sound.asm) holds a trimmed PAL player for three
+[c16-sound-fx](https://github.com/phausser/c16-sound-fx) effects: 72
+flap-double (its loop rest removed), 50 im-robot with lower volumes for the
+point, and 79 life-wobble for the crash. Steps keep the library format: frame
+count, two 10-bit TED frequencies, `$FF11` control. Code, state, table and
+data take 256 bytes in the upper code segment and no zero page.
+
+Triggers only store `SOUND_REQUEST` (`$3148`). The pipe point is awarded
+inside the buffer flip, so starting the sound there would steal border time.
+`read_input` sets the flap request on a new press while playing, then calls
+`sound_tick`, which starts a pending effect or advances the current one by
+one frame. It runs before `wait_for_frame`; the worst tick measured in py65
+is 224 CPU cycles. Outside play, `read_input` drops a press while a sound
+still plays, so a crash sound ends before Space can restart, and a press
+held through it does not count. A new request replaces the playing effect, and
+`sound_silence` at every round start cuts a crash sound and drops any request.
+Bits 2-7 of `$FF12` (character source) and `$FF10` stay untouched.
+`input.asm` moved to the upper segment with it, leaving 34 bytes free below
+the hidden text buffer.
+
 ## Pages build
 
 GitHub Pages (Settings → Pages → Source: GitHub Actions) publishes
@@ -94,6 +116,8 @@ change `PIPE_RANDOM_SEED` in `src/constants.inc` to test another sequence.
 digit placement. `python tests/obstacles.py` verifies the multicolor stripe
 pattern and mode, generation, restarts, screen/color copies, ring/counter
 wraparound and an automated flight through changing gaps.
+`python tests/sound.py` checks effect lengths, replacement, silencing, the
+preserved TED register bits and the blocked restart during the crash sound.
 
 ## Current validation and remaining work
 

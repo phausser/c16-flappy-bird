@@ -8,6 +8,9 @@ initialise_input:
 ; The row is driven by the 6529 at $FD30, active low; writing $FF08 only
 ; latches whatever row $FD30 is already driving. A new press produces
 ; exactly one frame of FLAP_PRESSED; holding the key does not retrigger it.
+; A press during play requests the flap sound. Every call then advances
+; the sound by one frame; the main loop calls this once per frame. Outside
+; play, a press only counts once no sound is playing.
 read_input:
     lda #0
     sta FLAP_PRESSED
@@ -23,10 +26,22 @@ read_input:
     lda #1
     sta FLAP_HELD
     sta FLAP_PRESSED
-    rts
+    lda GAME_OVER
+    bne input_done
+    lda #SOUND_FLAP
+    sta SOUND_REQUEST
+    jmp sound_tick
 
 flap_released:
     lda #0
     sta FLAP_HELD
 input_done:
+    jsr sound_tick
+    ; After a crash the sound plays out first: a press during it does not
+    ; restart, and a fresh press is needed afterwards.
+    lda sound_delay
+    beq input_ready
+    lda #0
+    sta FLAP_PRESSED
+input_ready:
     rts

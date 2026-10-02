@@ -35,6 +35,7 @@ initialise_round:
     sta HUD_BLINK
     sta HUD_TIMER
     sta HUD_DIRTY
+    jsr sound_silence
     jsr initialise_video
     jsr initialise_obstacles
     jsr render_playfield
@@ -84,7 +85,6 @@ draw_accepted_bird:
 !source "src/obstacles.asm"
 !source "src/render.asm"
 !source "src/bird.asm"
-!source "src/input.asm"
 
 ; The hidden text buffer starts at $1800. A program that grows into it would
 ; be overwritten by the first mirror copy.
@@ -92,10 +92,12 @@ draw_accepted_bird:
     !error "program overlaps the hidden text buffer"
 }
 
-; HUD code and the bird-color helper live above the hidden text buffer.
-; Imported masks follow; all stay below the game-state RAM.
+; HUD code, the bird-color helper, input and sound live above the hidden
+; text buffer. Imported masks follow; all stay below the game-state RAM.
 * = SCORE_CODE_START
 !source "src/score.asm"
+!source "src/input.asm"
+!source "src/sound.asm"
 !source "src/bird_masks.inc"
 !if * > GAME_STATE_RAM {
     !error "score code overlaps game state"

@@ -6,6 +6,10 @@ TED_KEYBOARD = $ff08
 ; 6529 single-port interface. A 0 bit selects that keyboard row. The column
 ; latch itself is TED_KEYBOARD: write the same mask there, then read it back.
 TED_KEYBOARD_ROW = $fd30
+; Tone 1 bits 8-9 are the low bits of TED_MISC.
+TED_FREQ1_LO = $ff0e
+TED_FREQ2_LO = $ff0f
+TED_FREQ2_HI = $ff10
 TED_SOUND_CTRL = $ff11
 TED_MISC = $ff12
 TED_CHAR_ADDR = $ff13

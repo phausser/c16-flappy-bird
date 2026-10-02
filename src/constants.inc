@@ -6,6 +6,12 @@ PLAYFIELD_ROWS = 24
 SCORE_ROW = 24
 GAME_STATE_DEAD = 1
 GAME_STATE_WAITING = 2
+; SOUND_REQUEST values; 0 means nothing pending.
+SOUND_FLAP = 1
+SOUND_POINT = 2
+SOUND_DEATH = 3
+; PAL TED clock constant for tone register values (c16-sound-fx).
+TED_PAL_SOUND_CLOCK = 110840
 
 INITIAL_SCROLL_OFFSET = 7
 ; Number of frames per column shift, and the pieces the hidden buffer is

@@ -5,10 +5,16 @@
 Flappy Bird for a stock 16 KiB PAL Commodore 16, written in ACME assembler.
 The game starts with blinking PRESS SPACE and waits for a new Space press.
 Space flaps. Each pipe you clear scores one point. Release Space and press
-it again to restart. The fixed bottom row shows HIGH with the session best on the left, TEDDY BIRD
+it again to restart; after a crash, the restart waits until its sound
+has finished. The fixed bottom row shows HIGH with the session best on the left, TEDDY BIRD
 in the center and SCORE with the current score on the right. Numbers use
 leading zeros to fill four places (five above 9999). On game over, PRESS SPACE
 blinks in the center and the bird uses `TED_BIRD_DEAD_COLOR`. The best score survives round restarts.
+
+Each flap, point and crash plays a short TED sound effect (IDs 72, 50 and
+79 from [c16-sound-fx](https://github.com/phausser/c16-sound-fx)). Only those
+three effects and a PAL-only player are included: 256 bytes in
+[src/sound.asm](src/sound.asm).
 
 Play it in the browser: https://phausser.github.io/c16-flappy-bird/
 
@@ -39,6 +45,7 @@ python tests/score.py
 python tests/obstacles.py
 python tests/collision.py
 python tests/gradient.py
+python tests/sound.py
 ```
 
 ## License

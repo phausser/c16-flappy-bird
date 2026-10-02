@@ -9,11 +9,12 @@
 ; $1001-$17ff  Program code. It must end before the hidden buffer.
 ; $1800-$1be7  Back color RAM. The scroll builds the next frame here.
 ; $1c00-$1fe7  Back screen RAM. $FF14 flips to this pair in the border.
-; $2000-$2fff  Score drawing, then the imported bird masks
+; $2000-$2fff  Score drawing, input, sound effects, then the imported bird masks
 ; $3000-$30de  Game state, candidate glyphs, saved cells, shifted-mask cache, score and HUD
 ; $3100-$313f  Gap start per world column, 64-column ring
 ; $3140-$3147  Generator state and renderer scratch
-; $3148-$33ff  Reserved
+; $3148        Pending sound effect
+; $3149-$33ff  Reserved
 ; $3400-$3bff  Character-set storage; TED uses the lower 128 glyphs
 ; $3c00-$3ffd  Safety reserve
 ; $3ffe-$3fff  Hardware IRQ vector (16 KiB mirror of $fffe-$ffff)
@@ -69,6 +70,7 @@ PIPE_REMAINING = $3144
 PIPE_WRITE_INDEX = $3145
 PIPE_RENDER_GAP_END = $3146
 PIPE_RENDER_GLYPH = $3147
+SOUND_REQUEST = $3148
 CHARSET_RAM = $3400
 CHARSET_SIZE = $0800
 RAM_RESERVE_START = $3c00

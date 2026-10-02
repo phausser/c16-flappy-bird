@@ -81,6 +81,8 @@ try_horizontal_scroll:
 bird_contact:
     lda #GAME_STATE_DEAD
     sta GAME_OVER
+    lda #SOUND_DEATH
+    sta SOUND_REQUEST
     lda #0
     sta BIRD_Y_FRACTION
     sta BIRD_VELOCITY_FRACTION
